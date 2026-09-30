@@ -68,7 +68,8 @@
       if (/Email not confirmed/i.test(m)) return 'Please confirm your email first. Check your inbox for the link from NextRung.';
       if (/already registered|already been registered/i.test(m)) return 'An account with this email already exists. Sign in instead.';
       if (/Password should be at least/i.test(m)) return 'Use a password with at least 8 characters.';
-      if (/rate limit|too many/i.test(m)) return 'Too many attempts. Wait a minute and try again.';
+      if (/email rate limit/i.test(m)) return 'We have sent too many confirmation emails in the last hour. Please try again later.';
+      if (/rate limit|too many/i.test(m)) return 'Too many attempts. Wait a few minutes and try again.';
       if (/meeting_link/.test(m)) return 'The meeting link must start with https://';
       if (/Failed to fetch|NetworkError/i.test(m)) return 'Could not reach the server. Check your connection and try again.';
       return m.replace(/^ERROR:\s*/, '');
