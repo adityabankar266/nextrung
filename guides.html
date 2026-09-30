@@ -66,7 +66,7 @@
   const dlg = document.getElementById('gdialog');
   const body = document.getElementById('gd-body');
   let rows = [];
-  let me = null;
+  let me = null, myRole = null;
 
   if (!NR.ready) {
     document.getElementById('not-ready').innerHTML = NR.notReadyHtml();
@@ -89,7 +89,7 @@
         ${g.bio ? `<p style="font-size:.9rem">${esc(g.bio.slice(0, 140))}${g.bio.length > 140 ? '…' : ''}</p>` : ''}
         <div class="g-foot">
           <span><span class="g-price">${g.from_price != null ? 'From ' + NR.inr(g.from_price) : 'No services yet'}</span>${g.review_count ? ` · <span class="rating">★ ${esc(g.rating)} (${g.review_count})</span>` : ''}</span>
-          <button class="btn xs" type="button" data-open="${esc(g.guide_id)}">View &amp; book</button>
+          <button class="btn xs" type="button" data-open="${esc(g.guide_id)}">${!me || myRole === 'learner' ? 'View &amp; book' : 'View profile'}</button>
         </div>
       </article>`).join('');
   }
@@ -132,6 +132,8 @@
         <a class="btn" href="${NR.loginUrl()}">Sign in to book</a>`;
     } else if (me.id === id) {
       bookHtml = '<div class="notice">This is your own profile.</div>';
+    } else if (myRole !== 'learner') {
+      bookHtml = `<div class="notice">Bookings are for learner accounts. You're signed in as ${myRole === 'admin' ? 'an admin' : 'a guide'}.</div>`;
     } else {
       bookHtml = `
         <form class="stack" id="book-form" novalidate>
@@ -212,6 +214,7 @@
 
   (async function init() {
     me = await NR.user();
+    if (me) { try { myRole = (await NR.profile(me.id)).role; } catch (e) { myRole = null; } }
     const { data, error } = await NR.sb.from('guide_directory').select('*').order('review_count', { ascending: false });
     if (error) { gl.innerHTML = `<div class="notice bad" style="grid-column:1/-1">${esc(NR.explain(error))}</div>`; return; }
     rows = data || [];

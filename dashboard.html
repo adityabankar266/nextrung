@@ -56,7 +56,7 @@
   // ---------- small helpers ----------
   const byId = (list, key) => Object.fromEntries((list || []).map(r => [r[key], r]));
   const isUpcoming = b => ['requested', 'accepted'].includes(b.status) && new Date(b.scheduled_at).getTime() > Date.now() - 3 * 3600e3;
-  const STATUS_LABEL = { requested: 'new request', declined: 'rejected' };
+  const STATUS_LABEL = { requested: 'New request', accepted: 'Accepted', declined: 'Rejected', cancelled: 'Cancelled', completed: 'Completed' };
   const status = s => `<span class="st st-${esc(s)}">${esc(STATUS_LABEL[s] || s)}</span>`;
   // Booking details as labelled rows, so the chosen service and time are easy to scan.
   const details = rows => `<dl class="kv">${rows.filter(r => r[1]).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join('')}</dl>`;
@@ -600,7 +600,7 @@
             <h3>Your services</h3>
             <div class="svc-list">${services.map(s => `
               <div class="svc-row">
-                <div><div class="t">${esc(s.title)}${s.is_active ? '' : ' <span class="st st-cancelled">hidden</span>'}</div>
+                <div><div class="t">${esc(s.title)}${s.is_active ? '' : ' <span class="st st-cancelled">Hidden</span>'}</div>
                   <div class="d">${s.duration_min} min${s.description ? ' · ' + esc(s.description) : ''}</div></div>
                 <span class="g-price">${NR.inr(s.price_inr)}</span>
                 <div class="bk-actions">
@@ -882,7 +882,7 @@
             <div class="who-head sm">${NR.avatar(p.full_name, p.avatar_url, 44)}<div><div class="bk-title">${esc(p.full_name || 'Unnamed')}${g.headline ? ' · ' + esc(g.headline) : ''}</div>
               <div class="bk-meta">${esc([g.field, g.years_experience, g.availability].filter(Boolean).join(' · ') || 'Profile incomplete')}</div>
               <div class="bk-meta">${esc(c.email || '')}${c.phone ? ' · ' + esc(c.phone) : ''} · joined ${NR.when(g.created_at).replace(/,.*$/, '')}</div></div></div>
-            ${g.is_verified ? '<span class="st st-accepted">verified</span>' : g.is_rejected ? '<span class="st st-declined">rejected</span>' : '<span class="st st-requested">pending</span>'}
+            ${g.is_verified ? '<span class="st st-accepted">Verified</span>' : g.is_rejected ? '<span class="st st-declined">Rejected</span>' : '<span class="st st-requested">Pending review</span>'}
           </div>
           ${g.bio ? `<div class="bk-note">${esc(g.bio)}</div>` : ''}
           <div class="bk-actions">

@@ -183,6 +183,7 @@
       if (!slot) return;
       const u = await NR.user();
       if (u) {
+        try { const pr = await NR.profile(u.id); document.documentElement.dataset.role = pr.role; NR.role = pr.role; } catch (e) {}
         slot.innerHTML = `<a class="btn ghost sm" href="dashboard.html">Dashboard</a>
           <button class="btn sm" type="button" data-signout>Sign out</button>`;
         slot.querySelector('[data-signout]').addEventListener('click', async () => {

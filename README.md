@@ -61,6 +61,7 @@ Schema changes ship as numbered files in `supabase/migrations/`. Run each new fi
 | `002_guide_rejection.sql` | Admins can reject guide applications |
 | `003_slots_and_reschedule.sql` | Guide time slots, slot-based booking, rescheduling |
 | `004_profile_photos.sql` | Profile photos (storage bucket), guide UPI payout details |
+| `005_learners_only_booking.sql` | Only learner accounts can book sessions |
 
 ## Testing
 

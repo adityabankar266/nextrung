@@ -78,6 +78,11 @@ def main():
         p.click("[data-switch=admin]"); p.wait_for_selector("text=To verify")
         check("and switch back to admin", p.locator("[data-switch=guide]").count() == 1)
 
+        p.goto(base + "/guides.html?id=g1"); p.wait_for_selector("#gd-body >> text=Bookings are for learner accounts")
+        check("admin sees no booking form", p.locator("#book-form").count() == 0)
+        p.goto(base + "/index.html"); p.wait_for_timeout(600)
+        check("sign-up prompts hidden when signed in", not p.locator(".doors").is_visible() and not p.locator("#enroll").is_visible())
+
         print("guide")
         p = page_for(b, "guide", errors)
         p.goto(base + "/dashboard.html"); p.wait_for_selector("text=Requests")
@@ -86,6 +91,7 @@ def main():
         check("request shows chosen service", panel.locator("dd >> text=Mock panel with scorecard").is_visible())
         check("request shows date and time", panel.locator("dt >> text=Date & time").is_visible())
         check("request has Reject button", panel.locator("[data-act=decline] >> text=Reject").is_visible())
+        check("status labels start with a capital", panel.locator(".st >> text=New request").count() == 1, panel.locator(".st").all_inner_texts())
         p.click("[data-panel=requests] [data-act=decline]")
         check("reject request asks for confirmation", p.locator("#modal >> text=Reject this request?").is_visible())
         p.click("#modal [data-close] >> nth=1"); p.wait_for_timeout(200)

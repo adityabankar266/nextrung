@@ -39,7 +39,7 @@
         <span class="eyebrow">Career guidance · Freshers to experienced</span>
         <h1>Reach your next rung with people who have <em>already climbed it</em>.</h1>
         <p class="lede">Prepare for interviews, plan a career switch, or get ready for your next role. Book one-to-one sessions with working professionals in your field, and leave each one with clear feedback and next steps.</p>
-        <div class="doors">
+        <div class="doors guest-only">
           <a class="door primary" href="login.html?mode=signup&amp;role=learner">
             <span class="who">For learners</span>
             <span class="what">I want guidance</span>
@@ -335,7 +335,7 @@
     </div>
   </section>
 
-  <section class="block" id="enroll" aria-labelledby="enroll-h">
+  <section class="block guest-only" id="enroll" aria-labelledby="enroll-h">
     <div class="wrap">
       <div class="sec-head">
         <span class="eyebrow">Join</span>
@@ -508,7 +508,7 @@ function renderGuides(filter){
       <div class="g-top">${g.live ? NR.avatar(g.full, g.photo, 44) : `<span class="av" aria-hidden="true">${esc(g.i)}</span>`}<div><div class="g-role">${esc(g.role)}</div><div class="meta">${esc(g.field)}</div></div></div>
       <p class="muted" style="font-size:.9rem">${esc(g.exp)}</p>
       <div class="g-tags">${g.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
-      <div class="g-foot"><span><span class="g-price">${g.price ? 'From ' + esc(g.price) : 'Price on request'}</span>${g.rating ? ` · <span class="rating">★ ${esc(g.rating)}</span>` : ''}</span><a class="btn xs" href="${g.live ? 'guides.html?id=' + encodeURIComponent(g.id) : 'guides.html'}">${g.live ? 'View & book' : 'Browse'}</a></div>
+      <div class="g-foot"><span><span class="g-price">${g.price ? 'From ' + esc(g.price) : 'Price on request'}</span>${g.rating ? ` · <span class="rating">★ ${esc(g.rating)}</span>` : ''}</span><a class="btn xs" href="${g.live ? 'guides.html?id=' + encodeURIComponent(g.id) : 'guides.html'}">${!g.live ? 'Browse' : (NR.role && NR.role !== 'learner') ? 'View profile' : 'View & book'}</a></div>
     </article>`).join('');
 }
 ['All fields', ...names].forEach((n,i) => {
