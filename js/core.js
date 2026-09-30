@@ -3,9 +3,19 @@
   const cfg = window.NEXTRUNG_CONFIG || {};
   const hasValues = cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY &&
     !cfg.SUPABASE_URL.startsWith('YOUR_') && !cfg.SUPABASE_ANON_KEY.startsWith('YOUR_');
+  // Supabase's newer "sb_publishable_…" keys must travel only in the apikey header.
+  // The client also copies the key into "Authorization: Bearer" when nobody is signed in,
+  // which the platform rejects, so drop that copy (a signed-in user's token is kept).
+  const key = cfg.SUPABASE_ANON_KEY || '';
+  const fetchForPublishableKey = (input, init = {}) => {
+    const headers = new Headers(init.headers || (input instanceof Request ? input.headers : undefined));
+    if (headers.get('Authorization') === 'Bearer ' + key) headers.delete('Authorization');
+    return fetch(input, { ...init, headers });
+  };
   const sb = hasValues && window.supabase
-    ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'implicit' }
+    ? window.supabase.createClient(cfg.SUPABASE_URL, key, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'implicit' },
+        global: key.startsWith('sb_publishable_') ? { fetch: fetchForPublishableKey } : {}
       })
     : null;
 

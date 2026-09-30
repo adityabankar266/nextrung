@@ -1,7 +1,6 @@
-// NextRung settings.
-// Paste your Supabase project values here (Supabase: Project Settings -> API).
-// The anon key is designed to be public. NEVER put the service_role key in this file.
+// NextRung settings (Supabase: Project Settings -> API Keys).
+// The publishable key is designed to be public. NEVER put a secret or service_role key in this file.
 window.NEXTRUNG_CONFIG = {
-  SUPABASE_URL: "YOUR_SUPABASE_URL",
-  SUPABASE_ANON_KEY: "YOUR_SUPABASE_ANON_KEY"
+  SUPABASE_URL: "https://ispwnampzdahaisacjya.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_V7UcZqwqx6qK4YQpIlocOw_sDiJXglk"
 };
