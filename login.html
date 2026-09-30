@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sign in · NextRung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 18 18"><path d="M5 1v16M13 1v16" stroke="var(--paper)" stroke-width="2" stroke-linecap="round"/><path d="M5 14h8M5 9h8" stroke="var(--paper)" stroke-width="2"/><path d="M5 4h8" stroke="var(--accent)" stroke-width="2.4"/></svg></span><span>Next<b>Rung</b></span></a>
+    <nav class="links" aria-label="Main"><a href="guides.html">Find a guide</a><a href="index.html#services">Services</a><a href="index.html#faq">FAQ</a></nav>
+    <div class="nav-cta"><a class="btn ghost sm" href="guides.html">Find a guide</a></div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap auth-wrap">
+    <div id="not-ready"></div>
+
+    <div class="portal-switch" role="tablist" aria-label="Sign in or create account" id="mode-tabs">
+      <button type="button" role="tab" id="tab-signin" data-mode="signin" aria-selected="true">Sign in</button>
+      <button type="button" role="tab" id="tab-signup" data-mode="signup" aria-selected="false">Create account</button>
+    </div>
+
+    <!-- Sign in -->
+    <form class="join" id="form-signin" novalidate>
+      <div><span class="eyebrow">Welcome back</span><h3>Sign in to NextRung</h3></div>
+      <div class="field"><label for="si-email">Email</label><input id="si-email" type="email" autocomplete="email" required></div>
+      <div class="field"><label for="si-pass">Password</label><input id="si-pass" type="password" autocomplete="current-password" required></div>
+      <button class="btn" type="submit">Sign in</button>
+      <button class="linkish" type="button" data-mode="forgot">Forgot your password?</button>
+      <div class="ok" id="msg-signin" hidden></div>
+    </form>
+
+    <!-- Sign up -->
+    <form class="join" id="form-signup" novalidate hidden>
+      <div><span class="eyebrow">Join NextRung</span><h3>Create your account</h3></div>
+      <fieldset class="field" style="border:0;margin:0;padding:0">
+        <legend>I want to</legend>
+        <div class="role-pick">
+          <label><input type="radio" name="role" id="role-learner" value="learner" checked><span><b>Get guidance</b>Freshers, job seekers, working professionals</span></label>
+          <label><input type="radio" name="role" id="role-guide" value="guide"><span><b>Guide others</b>Experienced professionals</span></label>
+        </div>
+      </fieldset>
+      <div class="row2">
+        <div class="field"><label for="su-name">Full name</label><input id="su-name" autocomplete="name" required></div>
+        <div class="field"><label for="su-email">Email</label><input id="su-email" type="email" autocomplete="email" required></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="su-pass">Password</label><input id="su-pass" type="password" autocomplete="new-password" minlength="8" required placeholder="At least 8 characters"></div>
+        <div class="field"><label for="su-field">Field</label><select id="su-field"></select></div>
+      </div>
+
+      <div id="learner-fields" class="stack">
+        <div class="row2">
+          <div class="field"><label for="su-stage">Career stage</label><select id="su-stage"></select></div>
+          <div class="field"><label for="su-goal">Main goal</label>
+            <select id="su-goal"><option>Crack interviews</option><option>Switch to a new role</option><option>Get promoted or lead a team</option><option>Improve resume and LinkedIn</option><option>Not sure yet, need direction</option></select></div>
+        </div>
+      </div>
+
+      <div id="guide-fields" class="stack" hidden>
+        <div class="row2">
+          <div class="field"><label for="su-headline">Current role</label><input id="su-headline" placeholder="e.g. Senior Business Analyst"></div>
+          <div class="field"><label for="su-exp">Years of experience</label><select id="su-exp"></select></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="su-li">LinkedIn profile</label><input id="su-li" type="url" placeholder="https://linkedin.com/in/yourname"></div>
+          <div class="field"><label for="su-avail">Usual availability</label><select id="su-avail"></select></div>
+        </div>
+        <fieldset class="field" style="border:0;margin:0;padding:0"><legend>Services you want to offer</legend>
+          <div class="checks">
+            <label><input type="checkbox" name="svc" value="Mock panels" checked>Mock panels</label>
+            <label><input type="checkbox" name="svc" value="Workshops">Workshops</label>
+            <label><input type="checkbox" name="svc" value="Career roadmap">Career roadmap</label>
+            <label><input type="checkbox" name="svc" value="Resume review">Resume review</label>
+            <label><input type="checkbox" name="svc" value="Leadership coaching">Leadership coaching</label>
+          </div>
+        </fieldset>
+        <div class="field"><label for="su-price">Starting price per session (₹)</label><input id="su-price" type="number" min="0" max="100000" step="50" value="999"></div>
+        <p class="demo-note">You can change services and prices later. Your profile goes live after a short verification call.</p>
+      </div>
+
+      <button class="btn" type="submit">Create account</button>
+      <div class="ok" id="msg-signup" hidden></div>
+    </form>
+
+    <!-- Forgot password -->
+    <form class="join" id="form-forgot" novalidate hidden>
+      <div><span class="eyebrow">Reset password</span><h3>Get a reset link</h3></div>
+      <p class="muted">Enter the email you signed up with. We'll send a link to set a new password.</p>
+      <div class="field"><label for="fp-email">Email</label><input id="fp-email" type="email" autocomplete="email" required></div>
+      <button class="btn" type="submit">Send reset link</button>
+      <button class="linkish" type="button" data-mode="signin">Back to sign in</button>
+      <div class="ok" id="msg-forgot" hidden></div>
+    </form>
+
+    <!-- Set new password (after clicking the email link) -->
+    <form class="join" id="form-reset" novalidate hidden>
+      <div><span class="eyebrow">Reset password</span><h3>Choose a new password</h3></div>
+      <div class="field"><label for="rp-pass">New password</label><input id="rp-pass" type="password" autocomplete="new-password" minlength="8" required></div>
+      <button class="btn" type="submit">Save password</button>
+      <div class="ok" id="msg-reset" hidden></div>
+    </form>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/core.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+  const next = (params.get('next') || 'dashboard.html').replace(/^[/\\]+/, '');
+  const safeNext = /^[a-z]+\.html(\?.*)?$/i.test(next) ? next : 'dashboard.html';
+  const forms = { signin: $('form-signin'), signup: $('form-signup'), forgot: $('form-forgot'), reset: $('form-reset') };
+
+  $('su-field').innerHTML = NR.options(NR.FIELDS, 'Business Analysis');
+  $('su-stage').innerHTML = NR.options(NR.STAGES);
+  $('su-exp').innerHTML = NR.options(NR.EXPERIENCE, '5–10 years');
+  $('su-avail').innerHTML = NR.options(NR.AVAILABILITY, 'Both');
+
+  if (!NR.ready) $('not-ready').innerHTML = NR.notReadyHtml();
+
+  function show(mode) {
+    Object.entries(forms).forEach(([k, f]) => { f.hidden = k !== mode; });
+    $('mode-tabs').hidden = mode === 'reset';
+    document.querySelectorAll('#mode-tabs [data-mode]').forEach(b =>
+      b.setAttribute('aria-selected', b.dataset.mode === mode ? 'true' : 'false'));
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-mode]');
+    if (b) show(b.dataset.mode);
+  });
+
+  function setRole(role) {
+    $('role-' + role).checked = true;
+    $('learner-fields').hidden = role !== 'learner';
+    $('guide-fields').hidden = role !== 'guide';
+  }
+  document.querySelectorAll('input[name=role]').forEach(r => r.addEventListener('change', () => setRole(r.value)));
+
+  if (params.get('mode') === 'signup') show('signup');
+  if (params.get('role') === 'guide') setRole('guide');
+
+  function say(id, text, bad) {
+    const el = $(id);
+    el.hidden = false;
+    el.classList.toggle('err', !!bad);
+    el.textContent = text;
+  }
+  const validEmail = v => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
+  function busy(form, on) { form.querySelector('button[type=submit]').disabled = on; }
+
+  // Already signed in? Go straight to the dashboard (unless resetting a password).
+  if (NR.ready) {
+    NR.sb.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') show('reset');
+    });
+    if (!/type=recovery/.test(location.hash)) {
+      NR.user().then(u => { if (u) location.replace(safeNext); });
+    } else {
+      show('reset');
+    }
+  }
+
+  forms.signin.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!NR.ready) return say('msg-signin', 'The database is not connected yet.', true);
+    const email = $('si-email').value.trim(), password = $('si-pass').value;
+    if (!validEmail(email) || !password) return say('msg-signin', 'Enter your email and password.', true);
+    busy(forms.signin, true);
+    const { error } = await NR.sb.auth.signInWithPassword({ email, password });
+    busy(forms.signin, false);
+    if (error) return say('msg-signin', NR.explain(error), true);
+    location.replace(safeNext);
+  });
+
+  forms.signup.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!NR.ready) return say('msg-signup', 'The database is not connected yet.', true);
+    const role = document.querySelector('input[name=role]:checked').value;
+    const full_name = $('su-name').value.trim(), email = $('su-email').value.trim(), password = $('su-pass').value;
+    if (!full_name) return say('msg-signup', 'Add your full name.', true);
+    if (!validEmail(email)) return say('msg-signup', 'Add a valid email address.', true);
+    if (password.length < 8) return say('msg-signup', 'Use a password with at least 8 characters.', true);
+
+    const meta = { role, full_name, field: $('su-field').value };
+    if (role === 'learner') {
+      meta.career_stage = $('su-stage').value;
+      meta.goal = $('su-goal').value;
+    } else {
+      const li = $('su-li').value.trim();
+      if (li && !/^https:\/\//i.test(li)) return say('msg-signup', 'The LinkedIn link should start with https://', true);
+      meta.headline = $('su-headline').value.trim();
+      meta.years_experience = $('su-exp').value;
+      meta.linkedin_url = li;
+      meta.availability = $('su-avail').value;
+      meta.services = [...document.querySelectorAll('input[name=svc]:checked')].map(c => c.value);
+      meta.price_inr = String(Math.max(0, Math.min(100000, parseInt($('su-price').value, 10) || 0)));
+    }
+
+    busy(forms.signup, true);
+    const { data, error } = await NR.sb.auth.signUp({
+      email, password,
+      options: { data: meta, emailRedirectTo: new URL('dashboard.html', location.href).href }
+    });
+    busy(forms.signup, false);
+    if (error) return say('msg-signup', NR.explain(error), true);
+    if (data.session) return location.replace('dashboard.html');
+    // Supabase returns a user with no identities when the email is already registered
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      return say('msg-signup', 'An account with this email already exists. Sign in instead.', true);
+    }
+    say('msg-signup', `Almost done. We sent a confirmation link to ${email}. Open it to activate your account, then sign in.`);
+    forms.signup.querySelector('button[type=submit]').hidden = true;
+  });
+
+  forms.forgot.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!NR.ready) return say('msg-forgot', 'The database is not connected yet.', true);
+    const email = $('fp-email').value.trim();
+    if (!validEmail(email)) return say('msg-forgot', 'Add a valid email address.', true);
+    busy(forms.forgot, true);
+    const { error } = await NR.sb.auth.resetPasswordForEmail(email, { redirectTo: new URL('login.html', location.href).href });
+    busy(forms.forgot, false);
+    if (error) return say('msg-forgot', NR.explain(error), true);
+    say('msg-forgot', `If ${email} has an account, a reset link is on its way.`);
+  });
+
+  forms.reset.addEventListener('submit', async e => {
+    e.preventDefault();
+    const password = $('rp-pass').value;
+    if (password.length < 8) return say('msg-reset', 'Use a password with at least 8 characters.', true);
+    busy(forms.reset, true);
+    const { error } = await NR.sb.auth.updateUser({ password });
+    busy(forms.reset, false);
+    if (error) return say('msg-reset', NR.explain(error), true);
+    say('msg-reset', 'Password updated. Taking you to your dashboard…');
+    setTimeout(() => location.replace('dashboard.html'), 1200);
+  });
+})();
+</script>
+</body>
+</html>

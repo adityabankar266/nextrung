@@ -8,263 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<style>
-:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-img{max-width:100%}
-[hidden]{display:none!important}
-/* Layout: a two-sided career marketplace. Hero splits into two doors (learn / guide); the interview scorecard stays as the signature object; portal previews show each side's dashboard. */
-:root{
-  --paper:#F2F5F1; --card:#FFFFFF; --ink:#15231E; --muted:#56655E; --line:#D3DCD5;
-  --accent:#E3A21A; --accent-ink:#7A5206; --accent-soft:#FBEFD2; --mark:#2E6A54; --mark-soft:#E1EEE7;
-  --warn:#B4532A;
-  --display:"Young Serif", Georgia, "Times New Roman", serif;
-  --body:"Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-  --r:10px;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --paper:#0E1613; --card:#15201B; --ink:#E6EDE8; --muted:#9BAAA2; --line:#27352F;
-    --accent:#F0B842; --accent-ink:#F0B842; --accent-soft:#2E2512; --mark:#72C4A1; --mark-soft:#17302A;
-    --warn:#E58A62; color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --paper:#0E1613; --card:#15201B; --ink:#E6EDE8; --muted:#9BAAA2; --line:#27352F;
-  --accent:#F0B842; --accent-ink:#F0B842; --accent-soft:#2E2512; --mark:#72C4A1; --mark-soft:#17302A;
-  --warn:#E58A62; color-scheme:dark;
-}
-*{box-sizing:border-box}
-body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;margin:0}
-.wrap{max-width:1120px;margin:0 auto;padding-inline:20px}
-h1,h2,h3,h4{font-family:var(--display);font-weight:400;line-height:1.15;text-wrap:balance;margin:0}
-h1{font-size:clamp(2.2rem,5.2vw,3.6rem);letter-spacing:-.01em}
-h2{font-size:clamp(1.7rem,3.4vw,2.4rem)}
-h3{font-size:1.25rem}
-h4{font-size:1.05rem}
-p{margin:0}
-a{color:inherit}
-.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.lede{color:var(--muted);font-size:1.08rem;max-width:62ch}
-.muted{color:var(--muted)}
-:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
-
-/* nav */
-header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-header.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:14px}
-.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:1.2rem;text-decoration:none}
-.brand-mark{width:30px;height:30px;border-radius:8px;background:var(--ink);display:grid;place-items:center}
-.brand-mark svg{width:18px;height:18px}
-.brand b{font-weight:400;color:var(--mark)}
-nav.links{display:flex;gap:22px;font-size:.92rem}
-nav.links a{text-decoration:none;color:var(--muted)}
-nav.links a:hover{color:var(--ink)}
-.nav-cta{display:flex;gap:8px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:600 .95rem var(--body);padding:12px 20px;border-radius:999px;border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);text-decoration:none;cursor:pointer}
-.btn:hover{background:transparent;color:var(--ink)}
-.btn.ghost{background:transparent;color:var(--ink)}
-.btn.ghost:hover{background:var(--ink);color:var(--paper)}
-.btn.sm{padding:8px 16px;font-size:.88rem}
-.btn.xs{padding:6px 12px;font-size:.8rem}
-@media (max-width:900px){nav.links{display:none}}
-@media (max-width:460px){.nav-cta .ghost{display:none}}
-
-/* hero */
-.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;padding-block:60px 64px}
-.hero-copy{display:flex;flex-direction:column;gap:22px;min-width:0}
-.hero h1 em{font-style:normal;background:linear-gradient(transparent 62%,var(--accent-soft) 62%);padding-inline:2px}
-.doors{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media (max-width:520px){.doors{grid-template-columns:1fr}}
-.door{display:flex;flex-direction:column;gap:6px;padding:16px 18px;border-radius:12px;border:1.5px solid var(--ink);text-decoration:none;background:var(--card)}
-.door.primary{background:var(--ink);color:var(--paper)}
-.door .who{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
-.door .what{font-weight:600;font-size:1.02rem}
-.door .arrow{font-size:.88rem;opacity:.85}
-.door:hover{transform:translateY(-2px)}
-@media (prefers-reduced-motion:no-preference){.door{transition:transform .15s ease}}
-.domains-inline{display:flex;flex-wrap:wrap;gap:8px}
-.chip{font-family:var(--mono);font-size:.74rem;padding:5px 10px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:var(--card)}
-@media (max-width:880px){.hero .wrap{grid-template-columns:1fr;gap:36px;padding-block:40px 56px}}
-
-/* scorecard */
-.scorecard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 18px 40px -24px rgba(21,35,30,.35);display:flex;flex-direction:column;gap:16px;min-width:0;transform:rotate(1.2deg)}
-@media (prefers-reduced-motion:no-preference){.scorecard{transition:transform .4s ease}.scorecard:hover{transform:rotate(0)}}
-.sc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:1px dashed var(--line);padding-bottom:14px}
-.sc-head .who{font-weight:600}
-.meta{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
-.stamp{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mark);border:1.5px solid var(--mark);border-radius:6px;padding:4px 8px;white-space:nowrap;transform:rotate(-4deg)}
-.crit{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center}
-.crit .name{font-size:.9rem}
-.crit .score{font-family:var(--mono);font-size:.82rem;font-variant-numeric:tabular-nums}
-.dots{grid-column:1/-1;display:flex;gap:4px}
-.dots i{flex:1;height:6px;border-radius:3px;background:var(--line)}
-.dots i.on{background:var(--mark)}
-.dots i.hi{background:var(--accent)}
-.sc-note{background:var(--accent-soft);border-radius:8px;padding:12px 14px;font-size:.88rem}
-.sc-note b{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-ink);display:block;margin-bottom:4px;font-weight:500}
-
-/* sections */
-section.block{padding-block:72px;border-top:1px solid var(--line)}
-.sec-head{display:flex;flex-direction:column;gap:12px;margin-bottom:36px;max-width:740px}
-
-/* audiences */
-.aud{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media (max-width:820px){.aud{grid-template-columns:1fr}}
-.aud-col{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:24px;display:flex;flex-direction:column;gap:16px;min-width:0}
-.aud-col .tagline{color:var(--muted)}
-.svc{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;padding-top:14px;border-top:1px dashed var(--line)}
-.svc .ic{grid-row:span 2;width:34px;height:34px;border-radius:8px;background:var(--mark-soft);color:var(--mark);display:grid;place-items:center;font-family:var(--mono);font-size:.72rem;font-weight:500}
-.svc .t{font-weight:600}
-.svc .d{font-size:.92rem;color:var(--muted)}
-
-/* two-lane process */
-.lanes{display:grid;grid-template-columns:1fr 1fr;gap:40px}
-@media (max-width:880px){.lanes{grid-template-columns:1fr}}
-.lane h3{margin-bottom:18px}
-.steps{list-style:none;margin:0;padding:0;counter-reset:s}
-.steps li{position:relative;border-left:2px solid var(--ink);padding:0 0 22px 26px;display:flex;flex-direction:column;gap:4px}
-.steps li:last-child{padding-bottom:0}
-.steps li::before{counter-increment:s;content:"Step " counter(s);font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.steps li::after{content:"";position:absolute;top:3px;left:-7px;width:12px;height:12px;border-radius:50%;background:var(--paper);border:2px solid var(--ink)}
-.steps li:last-child::after{background:var(--accent);border-color:var(--accent)}
-.steps .s-t{font-weight:600}
-.steps .s-d{font-size:.92rem;color:var(--muted)}
-
-/* domain explorer */
-.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:24px;scrollbar-width:thin}
-.tab{flex:none;font:500 .9rem var(--body);padding:10px 16px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--muted);cursor:pointer}
-.tab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
-.panel{display:grid;grid-template-columns:1.25fr .75fr;gap:28px}
-@media (max-width:880px){.panel{grid-template-columns:1fr}}
-.qlist{display:flex;flex-direction:column;gap:10px;min-width:0}
-.qlist .intro{color:var(--muted);margin-bottom:6px}
-details.q{background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
-details.q summary{list-style:none;cursor:pointer;padding:16px 18px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;font-weight:500}
-details.q summary::-webkit-details-marker{display:none}
-.tag{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--mark);background:var(--mark-soft);border-radius:4px;padding:3px 6px;margin-top:2px;white-space:nowrap}
-details.q summary .plus{font-family:var(--mono);color:var(--muted);transition:transform .2s}
-details.q[open] summary .plus{transform:rotate(45deg)}
-details.q .ans{padding:12px 18px 16px;color:var(--muted);font-size:.94rem;border-top:1px dashed var(--line)}
-.brief{background:var(--ink);color:var(--paper);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:14px;align-self:start;min-width:0}
-.brief .eyebrow{color:color-mix(in srgb,var(--paper) 70%,transparent)}
-.brief h3{color:var(--paper)}
-.brief p,.brief ul{font-size:.93rem;color:color-mix(in srgb,var(--paper) 85%,transparent)}
-.brief ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
-.brief .timer{font-family:var(--mono);font-size:.78rem;color:var(--accent);border-top:1px solid color-mix(in srgb,var(--paper) 20%,transparent);padding-top:12px}
-
-/* guide directory */
-.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
-.guides{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-@media (max-width:900px){.guides{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:580px){.guides{grid-template-columns:1fr}}
-.guide{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
-.g-top{display:flex;gap:12px;align-items:center}
-.av{flex:none;width:44px;height:44px;border-radius:50%;background:var(--mark);color:var(--paper);display:grid;place-items:center;font-family:var(--mono);font-size:.8rem}
-.g-role{font-weight:600;line-height:1.3}
-.g-tags{display:flex;flex-wrap:wrap;gap:6px}
-.g-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px dashed var(--line);padding-top:12px;margin-top:auto}
-.g-price{font-family:var(--mono);font-size:.85rem;font-variant-numeric:tabular-nums}
-.rating{font-family:var(--mono);font-size:.78rem;color:var(--accent-ink)}
-.sample-flag{font-family:var(--mono);font-size:.72rem;color:var(--muted);margin-top:14px}
-
-/* portal preview */
-.portal-switch{display:inline-flex;border:1.5px solid var(--ink);border-radius:999px;padding:3px;margin-bottom:20px;gap:2px;flex-wrap:wrap}
-.portal-switch button{font:600 .9rem var(--body);border:0;background:transparent;color:var(--ink);padding:9px 18px;border-radius:999px;cursor:pointer}
-.portal-switch button[aria-selected="true"]{background:var(--ink);color:var(--paper)}
-.app{border:1px solid var(--line);border-radius:16px;background:var(--card);overflow:hidden;box-shadow:0 24px 50px -30px rgba(21,35,30,.4)}
-.app-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--paper)}
-.app-bar .dotsbar{display:flex;gap:6px}
-.app-bar .dotsbar i{width:10px;height:10px;border-radius:50%;background:var(--line)}
-.app-bar .url{font-family:var(--mono);font-size:.74rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.app-body{display:grid;grid-template-columns:200px 1fr;min-height:420px}
-@media (max-width:760px){.app-body{grid-template-columns:1fr}}
-.side{border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:4px}
-@media (max-width:760px){.side{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:10px 12px}}
-.side span{font-size:.88rem;padding:8px 12px;border-radius:8px;color:var(--muted);white-space:nowrap}
-.side span.on{background:var(--mark-soft);color:var(--ink);font-weight:600}
-.main{padding:22px;display:flex;flex-direction:column;gap:18px;min-width:0}
-.hello{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
-.widgets{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
-@media (max-width:640px){.widgets{grid-template-columns:1fr}}
-.w{border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.w.wide{grid-column:1/-1}
-.w-h{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-@media (max-width:520px){.stats{grid-template-columns:1fr}}
-.stat{border:1px solid var(--line);border-radius:12px;padding:14px 16px}
-.stat .n{font-family:var(--display);font-size:1.7rem;font-variant-numeric:tabular-nums}
-.stat .l{font-size:.82rem;color:var(--muted)}
-.list{display:flex;flex-direction:column}
-.li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line);font-size:.92rem}
-.li:last-child{border-bottom:0}
-.li .sub{font-size:.8rem;color:var(--muted)}
-.check{display:flex;gap:10px;align-items:center;font-size:.92rem}
-.box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--line);flex:none;display:grid;place-items:center}
-.box.done{background:var(--mark);border-color:var(--mark)}
-.box.done::after{content:"";width:8px;height:5px;border-left:2px solid var(--card);border-bottom:2px solid var(--card);transform:rotate(-45deg) translate(1px,-1px)}
-.box.next{border-color:var(--accent);background:var(--accent-soft)}
-.pill{font-family:var(--mono);font-size:.7rem;padding:3px 8px;border-radius:999px;white-space:nowrap}
-.pill.ok{background:var(--mark-soft);color:var(--mark)}
-.pill.wait{background:var(--accent-soft);color:var(--accent-ink)}
-.pill.no{background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn)}
-.req-actions{display:flex;gap:6px;flex:none}
-svg.trend text{fill:var(--muted);font-family:var(--mono);font-size:10px}
-svg.trend .val{fill:var(--ink);font-size:11px}
-
-/* plans */
-.plan-groups{display:grid;grid-template-columns:1.4fr 1fr;gap:24px}
-@media (max-width:900px){.plan-groups{grid-template-columns:1fr}}
-.pg h3{margin-bottom:14px}
-.plans{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
-@media (max-width:560px){.plans{grid-template-columns:1fr}}
-.plan{border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:12px;background:var(--card);min-width:0}
-.plan.feature{border:2px solid var(--ink);position:relative}
-.plan.feature .flag{position:absolute;top:-12px;left:18px;background:var(--accent);color:#2A1C00;font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:999px}
-.price{font-family:var(--display);font-size:1.8rem;font-variant-numeric:tabular-nums}
-.price small{font-family:var(--body);font-size:.85rem;color:var(--muted)}
-.ticks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:.92rem}
-.ticks li{padding-left:22px;position:relative}
-.ticks li::before{content:"";position:absolute;left:2px;top:.55em;width:10px;height:6px;border-left:2px solid var(--mark);border-bottom:2px solid var(--mark);transform:rotate(-45deg)}
-.pro-terms{background:var(--ink);color:var(--paper);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:14px}
-.pro-terms .ticks li::before{border-color:var(--accent)}
-.pro-terms .big{font-family:var(--display);font-size:2.4rem;color:var(--accent);line-height:1}
-.pro-terms p{color:color-mix(in srgb,var(--paper) 80%,transparent);font-size:.93rem}
-.fine{margin-top:18px;font-size:.85rem;color:var(--muted);max-width:75ch}
-
-/* campus */
-.campus{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center;background:var(--accent-soft);border-radius:18px;padding:36px}
-@media (max-width:820px){.campus{grid-template-columns:1fr;padding:24px}}
-.campus ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
-
-/* enroll */
-.enroll{display:grid;grid-template-columns:.8fr 1.2fr;gap:40px;align-items:start}
-@media (max-width:880px){.enroll{grid-template-columns:1fr}}
-form.join{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:14px;min-width:0}
-.field{display:flex;flex-direction:column;gap:6px;min-width:0}
-.field label,.field legend{font-size:.85rem;font-weight:600;padding:0}
-fieldset.field{border:0;margin:0;padding:0}
-.field input,.field select{font:inherit;padding:11px 12px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);width:100%}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media (max-width:480px){.row2{grid-template-columns:1fr}}
-.checks{display:flex;flex-wrap:wrap;gap:8px}
-.checks label{display:inline-flex;gap:6px;align-items:center;font-weight:400;font-size:.88rem;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;background:var(--paper)}
-.checks input{width:auto;margin:0;accent-color:var(--mark)}
-.demo-note{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
-.ok{background:var(--mark-soft);color:var(--ink);border-radius:8px;padding:12px 14px;font-size:.92rem}
-.ok.err{background:color-mix(in srgb,var(--warn) 14%,transparent)}
-
-/* faq */
-.faq{max-width:780px}
-.faq details{border-bottom:1px solid var(--line);padding-block:14px}
-.faq summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:12px}
-.faq summary::-webkit-details-marker{display:none}
-.faq summary::after{content:"+";font-family:var(--mono);color:var(--muted)}
-.faq details[open] summary::after{content:"–"}
-.faq details p{margin-top:8px;color:var(--muted);font-size:.95rem}
-
-footer{border-top:1px solid var(--line);padding-block:32px;font-size:.85rem;color:var(--muted)}
-footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
-</style>
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 
@@ -275,13 +20,13 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
       <a href="#services">Services</a>
       <a href="#how">How it works</a>
       <a href="#guides">Guides</a>
-      <a href="#portal">Portal</a>
+      <a href="guides.html">Find a guide</a>
       <a href="#plans">Pricing</a>
       <a href="#faq">FAQ</a>
     </nav>
-    <div class="nav-cta">
-      <a class="btn ghost sm" href="#portal">Sign in</a>
-      <a class="btn sm" href="#enroll">Enroll</a>
+    <div class="nav-cta" data-auth-slot>
+      <a class="btn ghost sm" href="login.html">Sign in</a>
+      <a class="btn sm" href="login.html?mode=signup">Join</a>
     </div>
   </div>
 </header>
@@ -294,12 +39,12 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
         <h1>Reach your next rung with people who have <em>already climbed it</em>.</h1>
         <p class="lede">Prepare for interviews, plan a career switch, or get ready for your next role. Book one-to-one sessions with working professionals in your field, and leave each one with clear feedback and next steps.</p>
         <div class="doors">
-          <a class="door primary" href="#enroll" data-enroll="learner">
+          <a class="door primary" href="login.html?mode=signup&amp;role=learner">
             <span class="who">For learners</span>
             <span class="what">I want guidance</span>
             <span class="arrow">Freshers, job seekers, working professionals →</span>
           </a>
-          <a class="door" href="#enroll" data-enroll="pro">
+          <a class="door" href="login.html?mode=signup&amp;role=guide">
             <span class="who">For professionals</span>
             <span class="what">I want to guide</span>
             <span class="arrow">Share your experience and earn →</span>
@@ -423,7 +168,8 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
       </div>
       <div class="filters" role="tablist" aria-label="Filter guides" id="gfilters"></div>
       <div class="guides" id="glist"></div>
-      <p class="sample-flag">Sample profiles for the concept. Real guides will show names, photos and reviews.</p>
+      <p class="sample-flag" id="gflag">Sample profiles shown until the first guides are verified.</p>
+      <a class="btn ghost sm" style="margin-top:14px" href="guides.html">See all guides</a>
     </div>
   </section>
 
@@ -432,6 +178,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
       <div class="sec-head">
         <span class="eyebrow">Portal</span>
         <h2 id="portal-h">A dashboard for each side</h2>
+        <p class="demo-note">Preview with sample data. <a href="login.html">Sign in</a> to open your own dashboard.</p>
         <p class="lede">After signing in, learners track sessions and progress. Guides manage requests, schedule and earnings.</p>
       </div>
       <div class="portal-switch" role="tablist" aria-label="Choose portal">
@@ -484,7 +231,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
         <div class="app-body">
           <div class="side"><span class="on">Dashboard</span><span>Requests</span><span>Schedule</span><span>My services</span><span>Earnings</span><span>Profile</span></div>
           <div class="main">
-            <div class="hello"><div><div class="meta">Senior Business Analyst · Verified guide</div><h3>Good evening, Rahul</h3></div><a class="btn ghost sm" href="#enroll" data-enroll="pro">Edit availability</a></div>
+            <div class="hello"><div><div class="meta">Senior Business Analyst · Verified guide</div><h3>Good evening, Rahul</h3></div><span class="btn ghost sm" aria-hidden="true">Edit availability</span></div>
             <div class="stats">
               <div class="stat"><div class="n">14</div><div class="l">Sessions this month</div></div>
               <div class="stat"><div class="n">4.8</div><div class="l">Average rating (37 reviews)</div></div>
@@ -561,7 +308,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
             <div class="big">15%</div>
             <p>Platform fee on each paid session. You keep the rest.</p>
             <ul class="ticks"><li>Set your own prices and services</li><li>Choose your slots</li><li>Weekly payouts to your bank</li><li>Paid campus workshops</li><li>Ready-made scorecard templates</li></ul>
-            <a class="btn sm" style="background:var(--accent);border-color:var(--accent);color:#2A1C00;align-self:flex-start" href="#enroll" data-enroll="pro">Apply to guide</a>
+            <a class="btn sm" style="background:var(--accent);border-color:var(--accent);color:#2A1C00;align-self:flex-start" href="login.html?mode=signup&amp;role=guide">Apply to guide</a>
           </div>
         </div>
       </div>
@@ -588,72 +335,27 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
   </section>
 
   <section class="block" id="enroll" aria-labelledby="enroll-h">
-    <div class="wrap enroll">
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <span class="eyebrow">Enroll</span>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Join</span>
         <h2 id="enroll-h">Join as a learner or as a guide</h2>
-        <p class="lede">Pick the side that fits you. You can switch or add the other role later from your portal.</p>
-        <div class="portal-switch" role="tablist" aria-label="Choose enrollment type">
-          <button type="button" role="tab" id="et-learner" aria-selected="true" data-form="learner">I want guidance</button>
-          <button type="button" role="tab" id="et-pro" aria-selected="false" data-form="pro">I want to guide</button>
+        <p class="lede">Create a free account in a minute. Learners can book straight away; guides go live after a short verification call.</p>
+      </div>
+      <div class="aud">
+        <div class="aud-col">
+          <span class="eyebrow">For learners</span>
+          <h3>I want guidance</h3>
+          <ul class="ticks"><li>Browse verified guides in six fields</li><li>Request sessions at times that suit you</li><li>Get scorecards and a plan in your dashboard</li></ul>
+          <a class="btn" style="align-self:flex-start" href="login.html?mode=signup&amp;role=learner">Create learner account</a>
+        </div>
+        <div class="aud-col">
+          <span class="eyebrow">For professionals</span>
+          <h3>I want to guide</h3>
+          <ul class="ticks"><li>Set your own services and prices</li><li>Accept requests that fit your schedule</li><li>Write scorecards and build your reviews</li></ul>
+          <a class="btn ghost" style="align-self:flex-start" href="login.html?mode=signup&amp;role=guide">Apply as a guide</a>
         </div>
       </div>
-
-      <div>
-        <form class="join" id="form-learner" novalidate>
-          <div><span class="eyebrow">Learner enrollment</span><h3>Create your learner profile</h3></div>
-          <div class="row2">
-            <div class="field"><label for="l-name">Full name</label><input id="l-name" required autocomplete="name" placeholder="e.g. Priya Kulkarni"></div>
-            <div class="field"><label for="l-email">Email</label><input id="l-email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
-          </div>
-          <div class="row2">
-            <div class="field"><label for="l-stage">Career stage</label>
-              <select id="l-stage"><option>Final-year student</option><option>Recent graduate</option><option>1–3 years experience</option><option>3–8 years experience</option><option>8+ years experience</option></select></div>
-            <div class="field"><label for="l-field">Field</label>
-              <select id="l-field"><option>Software Development</option><option selected>Business Analysis</option><option>Quality Assurance</option><option>Data Analytics</option><option>Marketing</option><option>Leadership</option></select></div>
-          </div>
-          <div class="field"><label for="l-goal">Main goal</label>
-            <select id="l-goal"><option>Crack interviews</option><option>Switch to a new role</option><option>Get promoted or lead a team</option><option>Improve resume and LinkedIn</option><option>Not sure yet, need direction</option></select></div>
-          <button class="btn" type="submit">Create profile</button>
-          <p class="demo-note">Demo form: nothing is sent from this preview.</p>
-          <div class="ok" id="ok-learner" hidden></div>
-        </form>
-
-        <form class="join" id="form-pro" novalidate hidden>
-          <div><span class="eyebrow">Professional enrollment</span><h3>Apply to become a guide</h3></div>
-          <div class="row2">
-            <div class="field"><label for="p-name">Full name</label><input id="p-name" required autocomplete="name" placeholder="e.g. Rahul Deshmukh"></div>
-            <div class="field"><label for="p-email">Work or personal email</label><input id="p-email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
-          </div>
-          <div class="row2">
-            <div class="field"><label for="p-role">Current role</label><input id="p-role" placeholder="e.g. Senior Business Analyst"></div>
-            <div class="field"><label for="p-exp">Years of experience</label>
-              <select id="p-exp"><option>3–5 years</option><option selected>5–10 years</option><option>10–15 years</option><option>15+ years</option></select></div>
-          </div>
-          <div class="row2">
-            <div class="field"><label for="p-field">Field</label>
-              <select id="p-field"><option>Software Development</option><option selected>Business Analysis</option><option>Quality Assurance</option><option>Data Analytics</option><option>Marketing</option><option>Leadership</option></select></div>
-            <div class="field"><label for="p-li">LinkedIn profile</label><input id="p-li" type="url" placeholder="linkedin.com/in/yourname"></div>
-          </div>
-          <fieldset class="field"><legend>Services you want to offer</legend>
-            <div class="checks">
-              <label><input type="checkbox" id="s1" checked>Mock panels</label>
-              <label><input type="checkbox" id="s2">Workshops</label>
-              <label><input type="checkbox" id="s3">Career roadmap</label>
-              <label><input type="checkbox" id="s4">Resume review</label>
-              <label><input type="checkbox" id="s5">Leadership coaching</label>
-            </div>
-          </fieldset>
-          <div class="row2">
-            <div class="field"><label for="p-price">Price per session (₹)</label><input id="p-price" type="number" min="0" step="100" value="999"></div>
-            <div class="field"><label for="p-slot">Usual availability</label>
-              <select id="p-slot"><option>Weekday evenings</option><option>Weekends</option><option>Both</option></select></div>
-          </div>
-          <button class="btn" type="submit">Submit application</button>
-          <p class="demo-note">Demo form: nothing is sent from this preview.</p>
-          <div class="ok" id="ok-pro" hidden></div>
-        </form>
-      </div>
+      <p class="fine">Already have an account? <a href="login.html">Sign in</a>.</p>
     </div>
   </section>
 
@@ -680,6 +382,9 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/core.js"></script>
 <script>
 const FIELDS = {
   "Software Development": {
@@ -782,18 +487,20 @@ names.forEach((n,i) => {
 });
 renderField('Business Analysis');
 
-/* guide directory */
+/* guide directory: live guides from the database, sample profiles until the first guides are verified */
 const gf = document.getElementById('gfilters');
 const gl = document.getElementById('glist');
+let GUIDE_ROWS = GUIDES.map(g => ({...g, live:false}));
 function renderGuides(filter){
   [...gf.children].forEach(b => b.setAttribute('aria-selected', b.dataset.f === filter ? 'true':'false'));
-  const list = GUIDES.filter(g => filter === 'All fields' || g.field === filter);
+  const list = GUIDE_ROWS.filter(g => filter === 'All fields' || g.field === filter).slice(0, 6);
+  if (!list.length) { gl.innerHTML = '<p class="muted">No guides in this field yet.</p>'; return; }
   gl.innerHTML = list.map(g => `
     <article class="guide">
       <div class="g-top"><span class="av" aria-hidden="true">${esc(g.i)}</span><div><div class="g-role">${esc(g.role)}</div><div class="meta">${esc(g.field)}</div></div></div>
       <p class="muted" style="font-size:.9rem">${esc(g.exp)}</p>
       <div class="g-tags">${g.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
-      <div class="g-foot"><span><span class="g-price">From ${esc(g.price)}</span> · <span class="rating">★ ${esc(g.rating)}</span></span><a class="btn xs" href="#enroll" data-enroll="learner">Book</a></div>
+      <div class="g-foot"><span><span class="g-price">${g.price ? 'From ' + esc(g.price) : 'Price on request'}</span>${g.rating ? ` · <span class="rating">★ ${esc(g.rating)}</span>` : ''}</span><a class="btn xs" href="${g.live ? 'guides.html?id=' + encodeURIComponent(g.id) : 'guides.html'}">${g.live ? 'View & book' : 'Browse'}</a></div>
     </article>`).join('');
 }
 ['All fields', ...names].forEach((n,i) => {
@@ -804,6 +511,22 @@ function renderGuides(filter){
   gf.appendChild(b);
 });
 renderGuides('All fields');
+
+if (window.NR && NR.ready) {
+  NR.sb.from('guide_directory').select('*').limit(24).then(({ data, error }) => {
+    if (error || !data || !data.length) return;
+    GUIDE_ROWS = data.map(g => ({
+      live: true, id: g.guide_id, i: NR.initials(g.full_name),
+      role: g.full_name + (g.headline ? ' · ' + g.headline : ''), field: g.field || 'General',
+      exp: [g.years_experience, g.availability].filter(Boolean).join(' · '),
+      tags: [g.field, g.years_experience].filter(Boolean),
+      price: g.from_price != null ? NR.inr(g.from_price) : '',
+      rating: g.review_count ? `${g.rating} (${g.review_count})` : ''
+    }));
+    document.getElementById('gflag').hidden = true;
+    renderGuides('All fields');
+  });
+}
 
 /* portal switch */
 document.querySelectorAll('[data-portal]').forEach(btn => btn.addEventListener('click', () => {
@@ -820,39 +543,6 @@ document.getElementById('reqs').addEventListener('click', e => {
   box.innerHTML = b.dataset.act === 'ok' ? '<span class="pill ok">Accepted</span>' : '<span class="pill no">Declined</span>';
 });
 
-/* enrollment switch */
-function showForm(which){
-  document.querySelectorAll('[data-form]').forEach(b => b.setAttribute('aria-selected', b.dataset.form === which ? 'true':'false'));
-  document.getElementById('form-learner').hidden = which !== 'learner';
-  document.getElementById('form-pro').hidden = which !== 'pro';
-}
-document.querySelectorAll('[data-form]').forEach(b => b.addEventListener('click', () => showForm(b.dataset.form)));
-document.addEventListener('click', e => {
-  const a = e.target.closest('[data-enroll]'); if (a) showForm(a.dataset.enroll);
-});
-
-/* form handling */
-const validEmail = v => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
-function handle(formId, okId, nameId, emailId, message){
-  document.getElementById(formId).addEventListener('submit', e => {
-    e.preventDefault();
-    const ok = document.getElementById(okId);
-    const name = document.getElementById(nameId).value.trim();
-    const email = document.getElementById(emailId).value.trim();
-    ok.hidden = false;
-    if (!name || !validEmail(email)) {
-      ok.classList.add('err');
-      ok.textContent = 'Add your name and a valid email address to continue.';
-      return;
-    }
-    ok.classList.remove('err');
-    ok.textContent = message(name.split(' ')[0], email);
-  });
-}
-handle('form-learner','ok-learner','l-name','l-email', (n,em) =>
-  `Thanks, ${n}. In the live site, your learner portal opens now and we email ${em} with guides who match ${document.getElementById('l-field').value}.`);
-handle('form-pro','ok-pro','p-name','p-email', (n,em) =>
-  `Thanks, ${n}. In the live site, we email ${em} within two working days to schedule your verification call.`);
 </script>
 
 </body>

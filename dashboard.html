@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dashboard · NextRung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 18 18"><path d="M5 1v16M13 1v16" stroke="var(--paper)" stroke-width="2" stroke-linecap="round"/><path d="M5 14h8M5 9h8" stroke="var(--paper)" stroke-width="2"/><path d="M5 4h8" stroke="var(--accent)" stroke-width="2.4"/></svg></span><span>Next<b>Rung</b></span></a>
+    <nav class="links" aria-label="Main"><a href="guides.html">Find a guide</a><a href="dashboard.html" aria-current="page">Dashboard</a><a href="index.html#faq">FAQ</a></nav>
+    <div class="nav-cta" data-auth-slot></div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap" id="dash"><p class="spinner">Loading your dashboard…</p></div>
+</main>
+
+<dialog class="modal" id="modal"><div class="modal-body" id="modal-body"></div></dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/core.js"></script>
+<script>
+(function () {
+  const esc = NR.esc, sb = NR.sb;
+  const root = document.getElementById('dash');
+  const modal = document.getElementById('modal');
+  const modalBody = document.getElementById('modal-body');
+  const DEFAULT_CRITERIA = ['Problem framing', 'Domain knowledge', 'Communication & structure', 'Confidence under questioning'];
+  let me = null, profile = null, activeTab = null;
+
+  // ---------- small helpers ----------
+  const byId = (list, key) => Object.fromEntries((list || []).map(r => [r[key], r]));
+  const isUpcoming = b => ['requested', 'accepted'].includes(b.status) && new Date(b.scheduled_at).getTime() > Date.now() - 3 * 3600e3;
+  const status = s => `<span class="st st-${esc(s)}">${esc(s)}</span>`;
+  function openModal(html) { modalBody.innerHTML = html; if (!modal.open) modal.showModal(); }
+  function closeModal() { if (modal.open) modal.close(); }
+  modal.addEventListener('click', e => { if (e.target === modal || e.target.closest('[data-close]')) closeModal(); });
+  async function run(promise, okMsg) {
+    const { error } = await promise;
+    if (error) { NR.toast(NR.explain(error), true); return false; }
+    if (okMsg) NR.toast(okMsg);
+    return true;
+  }
+  function tabs(list, current) {
+    return `<div class="dash-tabs" role="tablist">${list.map(t => `
+      <button type="button" role="tab" data-tab="${t.id}" aria-selected="${t.id === current}">${esc(t.label)}${t.badge ? `<span class="badge">${t.badge}</span>` : ''}</button>`).join('')}</div>`;
+  }
+  function greeting() {
+    const h = Number(new Intl.DateTimeFormat('en-IN', { hour: 'numeric', hour12: false, timeZone: 'Asia/Kolkata' }).format(new Date()));
+    return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  }
+  const firstName = () => (profile.full_name || '').split(' ')[0] || 'there';
+
+  // Load bookings plus the names and details that go with them.
+  async function loadBookings(column) {
+    const { data: bookings, error } = await sb.from('bookings').select('*').eq(column, me.id).order('scheduled_at');
+    if (error) throw error;
+    const ids = bookings.map(b => b.id);
+    const people = [...new Set(bookings.flatMap(b => [b.learner_id, b.guide_id]))];
+    const [names, guides, learners, cards, reviews] = await Promise.all([
+      people.length ? sb.from('profiles').select('id, full_name').in('id', people) : { data: [] },
+      column === 'learner_id' && people.length ? sb.from('guide_profiles').select('user_id, headline').in('user_id', people) : { data: [] },
+      column === 'guide_id' && people.length ? sb.from('learner_profiles').select('*').in('user_id', people) : { data: [] },
+      ids.length ? sb.from('scorecards').select('*').in('booking_id', ids) : { data: [] },
+      ids.length ? sb.from('reviews').select('*').in('booking_id', ids) : { data: [] }
+    ]);
+    const n = byId(names.data, 'id'), g = byId(guides.data, 'user_id'), l = byId(learners.data, 'user_id');
+    const c = byId(cards.data, 'booking_id'), r = byId(reviews.data, 'booking_id');
+    return bookings.map(b => ({
+      ...b,
+      learner_name: (n[b.learner_id] || {}).full_name || 'Learner',
+      guide_name: (n[b.guide_id] || {}).full_name || 'Guide',
+      guide_headline: (g[b.guide_id] || {}).headline || '',
+      learner_info: l[b.learner_id] || null,
+      scorecard: c[b.id] || null,
+      review: r[b.id] || null
+    }));
+  }
+
+  function scorecardView(sc) {
+    const crit = Array.isArray(sc.criteria) ? sc.criteria : [];
+    return `
+      <div class="scorecard" style="transform:none;box-shadow:none">
+        <div class="sc-head"><div><div class="who">Session scorecard</div><div class="meta">Overall ${sc.overall ?? '–'} / 5</div></div></div>
+        ${crit.map(c => {
+          const s = Math.max(0, Math.min(5, Number(c.score) || 0));
+          const cls = s >= 4 ? 'on' : 'hi';
+          return `<div class="crit"><span class="name">${esc(c.name)}</span><span class="score">${s} / 5</span>
+            <span class="dots">${[1,2,3,4,5].map(i => `<i class="${i <= s ? cls : ''}"></i>`).join('')}</span></div>`;
+        }).join('')}
+        ${sc.note ? `<div class="sc-note"><b>Guide's note</b>${esc(sc.note)}</div>` : ''}
+        ${sc.fixes ? `<div class="bk-note"><strong>Priority fixes</strong>\n${esc(sc.fixes)}</div>` : ''}
+      </div>`;
+  }
+
+  // =====================================================================
+  // LEARNER
+  // =====================================================================
+  async function learnerView() {
+    const [bookings, lp, ct] = await Promise.all([
+      loadBookings('learner_id'),
+      sb.from('learner_profiles').select('*').eq('user_id', me.id).maybeSingle(),
+      sb.from('contacts').select('*').eq('user_id', me.id).maybeSingle()
+    ]);
+    const upcoming = bookings.filter(isUpcoming);
+    const past = bookings.filter(b => !isUpcoming(b)).reverse();
+    const cards = bookings.filter(b => b.scorecard);
+    const tab = activeTab || 'sessions';
+    const info = lp.data || {};
+
+    const bookingCard = b => `
+      <div class="bk">
+        <div class="bk-top">
+          <div><div class="bk-title">${esc(b.service_title)}</div>
+            <div class="bk-meta">with ${esc(b.guide_name)}${b.guide_headline ? ' · ' + esc(b.guide_headline) : ''}</div>
+            <div class="bk-meta">${NR.when(b.scheduled_at)} · ${b.duration_min} min · ${NR.inr(b.price_inr)}</div></div>
+          ${status(b.status)}
+        </div>
+        ${b.status === 'accepted' && NR.safeUrl(b.meeting_link) ? `<div>Meeting link: <a class="meet" href="${esc(NR.safeUrl(b.meeting_link))}" target="_blank" rel="noopener">${esc(b.meeting_link)}</a></div>` : ''}
+        ${b.status === 'accepted' && !b.meeting_link ? '<div class="bk-meta">Your guide will add the meeting link before the session.</div>' : ''}
+        ${b.status === 'requested' ? '<div class="bk-meta">Waiting for the guide to confirm.</div>' : ''}
+        ${b.guide_note ? `<div class="bk-note"><strong>Note from guide</strong>\n${esc(b.guide_note)}</div>` : ''}
+        <div class="bk-actions">
+          ${b.scorecard ? `<button class="btn xs" type="button" data-act="view-card" data-id="${b.id}">View scorecard</button>` : ''}
+          ${b.status === 'completed' && !b.review ? `<button class="btn xs" type="button" data-act="review" data-id="${b.id}">Rate this session</button>` : ''}
+          ${b.review ? `<span class="rating">You rated ${'★'.repeat(b.review.rating)}</span>` : ''}
+          ${['requested', 'accepted'].includes(b.status) ? `<button class="btn ghost xs" type="button" data-act="cancel" data-id="${b.id}">Cancel</button>` : ''}
+        </div>
+      </div>`;
+
+    root.innerHTML = `
+      <div class="page-head">
+        <div><div class="meta">${esc([info.career_stage, info.field].filter(Boolean).join(' · ') || 'Learner')}</div>
+          <h1 style="font-size:clamp(1.8rem,4vw,2.4rem)">${greeting()}, ${esc(firstName())}</h1></div>
+        <a class="btn" href="guides.html${info.field ? '?field=' + encodeURIComponent(info.field) : ''}">Book a session</a>
+      </div>
+      ${tabs([{ id: 'sessions', label: 'Sessions', badge: upcoming.length }, { id: 'scorecards', label: 'Scorecards', badge: cards.length }, { id: 'profile', label: 'Profile' }], tab)}
+      <div data-panel="sessions" ${tab !== 'sessions' ? 'hidden' : ''}>
+        <div class="grid-main">
+          <div class="stack">
+            <h3>Upcoming</h3>
+            ${upcoming.map(bookingCard).join('') || `<div class="empty">No upcoming sessions. <a href="guides.html">Find a guide</a> to book your first one.</div>`}
+          </div>
+          <div class="stack">
+            <h3>Past</h3>
+            ${past.map(bookingCard).join('') || '<div class="empty">Your finished and cancelled sessions will appear here.</div>'}
+          </div>
+        </div>
+      </div>
+      <div data-panel="scorecards" ${tab !== 'scorecards' ? 'hidden' : ''}>
+        <div class="grid-2">${cards.map(b => `
+          <div class="card"><div><div class="bk-title">${esc(b.service_title)}</div><div class="bk-meta">${esc(b.guide_name)} · ${NR.when(b.scheduled_at)}</div></div>${scorecardView(b.scorecard)}</div>`).join('')
+          || '<div class="empty" style="grid-column:1/-1">Scorecards from your guides will appear here after each session.</div>'}</div>
+      </div>
+      <div data-panel="profile" ${tab !== 'profile' ? 'hidden' : ''}>
+        <form class="join" id="learner-profile" novalidate style="max-width:640px">
+          <h3>Your profile</h3>
+          <div class="row2">
+            <div class="field"><label for="p-name">Full name</label><input id="p-name" value="${esc(profile.full_name)}" maxlength="120"></div>
+            <div class="field"><label for="p-phone">Phone (optional)</label><input id="p-phone" type="tel" value="${esc((ct.data || {}).phone || '')}" maxlength="20"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="p-stage">Career stage</label><select id="p-stage"><option value="">Choose…</option>${NR.options(NR.STAGES, info.career_stage)}</select></div>
+            <div class="field"><label for="p-field">Field</label><select id="p-field"><option value="">Choose…</option>${NR.options(NR.FIELDS, info.field)}</select></div>
+          </div>
+          <div class="field"><label for="p-goal">Main goal</label><input id="p-goal" value="${esc(info.goal || '')}" maxlength="200"></div>
+          <p class="demo-note">Signed in as ${esc(me.email)}. Guides you book can see your name, stage, field and goal.</p>
+          <button class="btn" type="submit" style="align-self:flex-start">Save profile</button>
+        </form>
+      </div>`;
+
+    const all = byId(bookings, 'id');
+    root.onclick = async e => {
+      const t = e.target.closest('[data-tab]');
+      if (t) { activeTab = t.dataset.tab; return learnerView(); }
+      const a = e.target.closest('[data-act]');
+      if (!a) return;
+      const b = all[a.dataset.id];
+      if (a.dataset.act === 'view-card') openModal(`<div class="modal-head"><h3>${esc(b.service_title)}</h3><button class="x" data-close aria-label="Close">×</button></div>${scorecardView(b.scorecard)}`);
+      if (a.dataset.act === 'cancel') confirmBox('Cancel this session?', `${esc(b.service_title)} with ${esc(b.guide_name)} on ${NR.when(b.scheduled_at)}.`, 'Cancel session', async () => {
+        if (await run(sb.from('bookings').update({ status: 'cancelled' }).eq('id', b.id), 'Session cancelled.')) learnerView();
+      });
+      if (a.dataset.act === 'review') reviewBox(b);
+    };
+    document.getElementById('learner-profile').onsubmit = async e => {
+      e.preventDefault();
+      const name = document.getElementById('p-name').value.trim();
+      if (!name) return NR.toast('Add your name.', true);
+      const ok = await run(sb.from('profiles').update({ full_name: name }).eq('id', me.id))
+        && await run(sb.from('contacts').update({ phone: document.getElementById('p-phone').value.trim() || null }).eq('user_id', me.id))
+        && await run(sb.from('learner_profiles').upsert({
+             user_id: me.id,
+             career_stage: document.getElementById('p-stage').value || null,
+             field: document.getElementById('p-field').value || null,
+             goal: document.getElementById('p-goal').value.trim()
+           }), 'Profile saved.');
+      if (ok) { profile.full_name = name; activeTab = 'profile'; learnerView(); }
+    };
+  }
+
+  function reviewBox(b) {
+    let rating = 0;
+    openModal(`
+      <div class="modal-head"><h3>Rate your session</h3><button class="x" data-close aria-label="Close">×</button></div>
+      <p class="muted">${esc(b.service_title)} with ${esc(b.guide_name)}</p>
+      <div class="stars" role="radiogroup" aria-label="Rating">${[1,2,3,4,5].map(i => `<button type="button" data-star="${i}" aria-label="${i} star${i > 1 ? 's' : ''}">★</button>`).join('')}</div>
+      <div class="field"><label for="rv-comment">Comment (shown publicly, optional)</label><textarea id="rv-comment" maxlength="1000"></textarea></div>
+      <button class="btn" type="button" id="rv-save">Submit rating</button>`);
+    modalBody.querySelectorAll('[data-star]').forEach(s => s.onclick = () => {
+      rating = Number(s.dataset.star);
+      modalBody.querySelectorAll('[data-star]').forEach(x => x.classList.toggle('on', Number(x.dataset.star) <= rating));
+    });
+    document.getElementById('rv-save').onclick = async () => {
+      if (!rating) return NR.toast('Choose a star rating.', true);
+      const ok = await run(sb.from('reviews').insert({
+        booking_id: b.id, guide_id: b.guide_id, learner_id: me.id, rating,
+        comment: document.getElementById('rv-comment').value.trim()
+      }), 'Thanks for your rating.');
+      if (ok) { closeModal(); learnerView(); }
+    };
+  }
+
+  function confirmBox(title, text, action, onYes) {
+    openModal(`
+      <div class="modal-head"><h3>${esc(title)}</h3><button class="x" data-close aria-label="Close">×</button></div>
+      <p>${text}</p>
+      <div class="bk-actions"><button class="btn" type="button" id="cf-yes">${esc(action)}</button><button class="btn ghost" type="button" data-close>Keep it</button></div>`);
+    document.getElementById('cf-yes').onclick = async () => { closeModal(); await onYes(); };
+  }
+
+  // =====================================================================
+  // GUIDE
+  // =====================================================================
+  async function guideView() {
+    const [gp, svc, bookings, ct, rv] = await Promise.all([
+      sb.from('guide_profiles').select('*').eq('user_id', me.id).maybeSingle(),
+      sb.from('services').select('*').eq('guide_id', me.id).order('created_at'),
+      loadBookings('guide_id'),
+      sb.from('contacts').select('*').eq('user_id', me.id).maybeSingle(),
+      sb.from('reviews').select('rating').eq('guide_id', me.id)
+    ]);
+    const g = gp.data || {};
+    const services = svc.data || [];
+    const requests = bookings.filter(b => b.status === 'requested' && new Date(b.scheduled_at) > new Date());
+    const upcoming = bookings.filter(b => b.status === 'accepted');
+    const past = bookings.filter(b => ['completed', 'declined', 'cancelled'].includes(b.status) || (b.status === 'requested' && new Date(b.scheduled_at) <= new Date())).reverse();
+    const monthKey = d => new Intl.DateTimeFormat('en-IN', { year: 'numeric', month: '2-digit', timeZone: 'Asia/Kolkata' }).format(new Date(d));
+    const thisMonth = bookings.filter(b => b.status === 'completed' && monthKey(b.scheduled_at) === monthKey(Date.now()));
+    const earnings = Math.round(thisMonth.reduce((s, b) => s + b.price_inr, 0) * (1 - NR.PLATFORM_FEE));
+    const ratings = (rv.data || []).map(r => r.rating);
+    const avg = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : '–';
+    const tab = activeTab || (requests.length ? 'requests' : 'upcoming');
+
+    const learnerLine = b => {
+      const l = b.learner_info || {};
+      return [l.career_stage, l.field, l.goal].filter(Boolean).map(esc).join(' · ');
+    };
+    const card = (b, actions) => `
+      <div class="bk">
+        <div class="bk-top">
+          <div><div class="bk-title">${esc(b.learner_name)} · ${esc(b.service_title)}</div>
+            ${learnerLine(b) ? `<div class="bk-meta">${learnerLine(b)}</div>` : ''}
+            <div class="bk-meta">${NR.when(b.scheduled_at)} · ${b.duration_min} min · ${NR.inr(b.price_inr)}</div></div>
+          ${status(b.status)}
+        </div>
+        ${b.learner_note ? `<div class="bk-note">${esc(b.learner_note)}</div>` : ''}
+        ${actions}
+      </div>`;
+
+    root.innerHTML = `
+      <div class="page-head">
+        <div><div class="meta">${esc(g.headline || 'Guide')}${g.is_verified ? ' · Verified guide' : ''}</div>
+          <h1 style="font-size:clamp(1.8rem,4vw,2.4rem)">${greeting()}, ${esc(firstName())}</h1></div>
+        ${g.is_verified ? `<a class="btn ghost" href="guides.html?id=${encodeURIComponent(me.id)}">View public profile</a>` : ''}
+      </div>
+      ${g.is_verified ? '' : `<div class="notice" style="margin-bottom:18px">Your profile is being reviewed. Learners will see you once we've verified your experience, usually within two working days. Meanwhile, complete your profile and services.</div>`}
+      <div class="stats" style="margin-bottom:22px">
+        <div class="stat"><div class="n">${thisMonth.length}</div><div class="l">Sessions completed this month</div></div>
+        <div class="stat"><div class="n">${avg}</div><div class="l">Average rating (${ratings.length} review${ratings.length === 1 ? '' : 's'})</div></div>
+        <div class="stat"><div class="n">${NR.inr(earnings)}</div><div class="l">Earnings this month, after ${Math.round(NR.PLATFORM_FEE * 100)}% fee</div></div>
+      </div>
+      ${tabs([
+        { id: 'requests', label: 'Requests', badge: requests.length },
+        { id: 'upcoming', label: 'Upcoming', badge: upcoming.length },
+        { id: 'past', label: 'Past' },
+        { id: 'services', label: 'Services' },
+        { id: 'profile', label: 'Profile' }], tab)}
+
+      <div data-panel="requests" class="stack" ${tab !== 'requests' ? 'hidden' : ''}>
+        ${requests.map(b => card(b, `
+          <div class="bk-actions">
+            <input type="url" placeholder="Meeting link (https://meet.google.com/…)" id="ml-${b.id}" aria-label="Meeting link">
+            <button class="btn xs" type="button" data-act="accept" data-id="${b.id}">Accept</button>
+            <button class="btn ghost xs" type="button" data-act="decline" data-id="${b.id}">Decline</button>
+          </div>`)).join('') || '<div class="empty">No new requests right now.</div>'}
+      </div>
+
+      <div data-panel="upcoming" class="stack" ${tab !== 'upcoming' ? 'hidden' : ''}>
+        ${upcoming.map(b => card(b, `
+          <div class="bk-actions">
+            <input type="url" value="${esc(b.meeting_link || '')}" placeholder="Meeting link (https://…)" id="ml-${b.id}" aria-label="Meeting link">
+            <button class="btn ghost xs" type="button" data-act="save-link" data-id="${b.id}">Save link</button>
+          </div>
+          <div class="bk-actions">
+            <button class="btn xs" type="button" data-act="scorecard" data-id="${b.id}">${b.scorecard ? 'Edit scorecard' : 'Write scorecard'}</button>
+            ${new Date(b.scheduled_at) <= new Date() ? `<button class="btn xs" type="button" data-act="complete" data-id="${b.id}">Mark completed</button>` : ''}
+            <button class="btn ghost xs" type="button" data-act="guide-cancel" data-id="${b.id}">Cancel</button>
+          </div>`)).join('') || '<div class="empty">No accepted sessions yet.</div>'}
+      </div>
+
+      <div data-panel="past" class="stack" ${tab !== 'past' ? 'hidden' : ''}>
+        ${past.map(b => card(b, `
+          <div class="bk-actions">
+            ${b.status === 'completed' ? `<button class="btn xs" type="button" data-act="scorecard" data-id="${b.id}">${b.scorecard ? 'Edit scorecard' : 'Write scorecard'}</button>` : ''}
+            ${b.review ? `<span class="rating">${'★'.repeat(b.review.rating)}${'☆'.repeat(5 - b.review.rating)}</span>${b.review.comment ? `<span class="bk-meta">“${esc(b.review.comment)}”</span>` : ''}` : ''}
+            ${b.status === 'requested' ? '<span class="bk-meta">Expired without a response.</span>' : ''}
+          </div>`)).join('') || '<div class="empty">Completed and closed sessions will appear here.</div>'}
+      </div>
+
+      <div data-panel="services" ${tab !== 'services' ? 'hidden' : ''}>
+        <div class="grid-main">
+          <div class="card">
+            <h3>Your services</h3>
+            <div class="svc-list">${services.map(s => `
+              <div class="svc-row">
+                <div><div class="t">${esc(s.title)}${s.is_active ? '' : ' <span class="st st-cancelled">hidden</span>'}</div>
+                  <div class="d">${s.duration_min} min${s.description ? ' · ' + esc(s.description) : ''}</div></div>
+                <span class="g-price">${NR.inr(s.price_inr)}</span>
+                <div class="bk-actions">
+                  <button class="btn ghost xs" type="button" data-act="edit-svc" data-id="${s.id}">Edit</button>
+                  <button class="btn ghost xs" type="button" data-act="toggle-svc" data-id="${s.id}">${s.is_active ? 'Hide' : 'Show'}</button>
+                </div>
+              </div>`).join('') || '<div class="empty">Add at least one service so learners can book you.</div>'}</div>
+          </div>
+          <form class="card" id="svc-form" novalidate>
+            <h3>Add a service</h3>
+            <div class="field"><label for="s-title">Title</label><input id="s-title" maxlength="120" placeholder="e.g. BA mock panel with scorecard"></div>
+            <div class="field"><label for="s-desc">Short description (optional)</label><input id="s-desc" maxlength="500"></div>
+            <div class="row2">
+              <div class="field"><label for="s-mins">Duration (minutes)</label><input id="s-mins" type="number" min="15" max="240" step="15" value="60"></div>
+              <div class="field"><label for="s-price">Price (₹)</label><input id="s-price" type="number" min="0" max="100000" step="50" value="999"></div>
+            </div>
+            <button class="btn" type="submit" style="align-self:flex-start">Add service</button>
+          </form>
+        </div>
+      </div>
+
+      <div data-panel="profile" ${tab !== 'profile' ? 'hidden' : ''}>
+        <form class="join" id="guide-profile" novalidate style="max-width:720px">
+          <h3>Public profile</h3>
+          <div class="row2">
+            <div class="field"><label for="g-name">Full name</label><input id="g-name" value="${esc(profile.full_name)}" maxlength="120"></div>
+            <div class="field"><label for="g-headline">Current role</label><input id="g-headline" value="${esc(g.headline || '')}" maxlength="120"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="g-field">Field</label><select id="g-field"><option value="">Choose…</option>${NR.options(NR.FIELDS, g.field)}</select></div>
+            <div class="field"><label for="g-exp">Experience</label><select id="g-exp"><option value="">Choose…</option>${NR.options(NR.EXPERIENCE, g.years_experience)}</select></div>
+          </div>
+          <div class="field"><label for="g-bio">About you</label><textarea id="g-bio" maxlength="1500" placeholder="Your background, the roles you've hired for, and how you help people.">${esc(g.bio || '')}</textarea></div>
+          <div class="row2">
+            <div class="field"><label for="g-li">LinkedIn profile</label><input id="g-li" type="url" value="${esc(g.linkedin_url || '')}" placeholder="https://linkedin.com/in/…"></div>
+            <div class="field"><label for="g-avail">Usual availability</label><select id="g-avail"><option value="">Choose…</option>${NR.options(NR.AVAILABILITY, g.availability)}</select></div>
+          </div>
+          <div class="field"><label for="g-phone">Phone (private, optional)</label><input id="g-phone" type="tel" value="${esc((ct.data || {}).phone || '')}" maxlength="20"></div>
+          <p class="demo-note">Signed in as ${esc(me.email)}. Your phone and email are never shown publicly.</p>
+          <button class="btn" type="submit" style="align-self:flex-start">Save profile</button>
+        </form>
+      </div>`;
+
+    const all = byId(bookings, 'id'), svcById = byId(services, 'id');
+    const link = id => (document.getElementById('ml-' + id) || {}).value?.trim() || '';
+    const refresh = tabId => { activeTab = tabId; guideView(); };
+
+    root.onclick = async e => {
+      const t = e.target.closest('[data-tab]');
+      if (t) return refresh(t.dataset.tab);
+      const a = e.target.closest('[data-act]');
+      if (!a) return;
+      const id = a.dataset.id, b = all[id];
+      switch (a.dataset.act) {
+        case 'accept': {
+          const ml = link(id);
+          if (ml && !NR.safeUrl(ml)) return NR.toast('The meeting link must start with https://', true);
+          if (await run(sb.from('bookings').update({ status: 'accepted', meeting_link: ml || null }).eq('id', id), 'Session accepted.')) refresh('requests');
+          break;
+        }
+        case 'decline':
+          confirmBox('Decline this request?', `${esc(b.learner_name)} · ${NR.when(b.scheduled_at)}`, 'Decline', async () => {
+            if (await run(sb.from('bookings').update({ status: 'declined' }).eq('id', id), 'Request declined.')) refresh('requests');
+          });
+          break;
+        case 'save-link': {
+          const ml = link(id);
+          if (ml && !NR.safeUrl(ml)) return NR.toast('The meeting link must start with https://', true);
+          if (await run(sb.from('bookings').update({ meeting_link: ml || null }).eq('id', id), 'Meeting link saved.')) refresh('upcoming');
+          break;
+        }
+        case 'complete':
+          if (await run(sb.from('bookings').update({ status: 'completed' }).eq('id', id), 'Marked as completed.')) {
+            if (!b.scorecard) { activeTab = 'past'; await guideView(); scorecardEditor({ ...b, status: 'completed' }); }
+            else refresh('past');
+          }
+          break;
+        case 'guide-cancel':
+          confirmBox('Cancel this session?', `${esc(b.learner_name)} · ${NR.when(b.scheduled_at)}. The learner will see it as cancelled.`, 'Cancel session', async () => {
+            if (await run(sb.from('bookings').update({ status: 'cancelled' }).eq('id', id), 'Session cancelled.')) refresh('upcoming');
+          });
+          break;
+        case 'scorecard': scorecardEditor(b); break;
+        case 'edit-svc': serviceEditor(svcById[id]); break;
+        case 'toggle-svc': {
+          const s = svcById[id];
+          if (await run(sb.from('services').update({ is_active: !s.is_active }).eq('id', id), s.is_active ? 'Service hidden.' : 'Service visible.')) refresh('services');
+          break;
+        }
+      }
+    };
+
+    document.getElementById('svc-form').onsubmit = async e => {
+      e.preventDefault();
+      const title = document.getElementById('s-title').value.trim();
+      if (title.length < 3) return NR.toast('Give the service a title (at least 3 characters).', true);
+      const ok = await run(sb.from('services').insert({
+        guide_id: me.id, title,
+        description: document.getElementById('s-desc').value.trim(),
+        duration_min: clamp(document.getElementById('s-mins').value, 15, 240, 60),
+        price_inr: clamp(document.getElementById('s-price').value, 0, 100000, 999)
+      }), 'Service added.');
+      if (ok) refresh('services');
+    };
+
+    document.getElementById('guide-profile').onsubmit = async e => {
+      e.preventDefault();
+      const name = document.getElementById('g-name').value.trim();
+      const li = document.getElementById('g-li').value.trim();
+      if (!name) return NR.toast('Add your name.', true);
+      if (li && !NR.safeUrl(li)) return NR.toast('The LinkedIn link should start with https://', true);
+      const ok = await run(sb.from('profiles').update({ full_name: name }).eq('id', me.id))
+        && await run(sb.from('contacts').update({ phone: document.getElementById('g-phone').value.trim() || null }).eq('user_id', me.id))
+        && await run(sb.from('guide_profiles').update({
+             headline: document.getElementById('g-headline').value.trim(),
+             field: document.getElementById('g-field').value || null,
+             years_experience: document.getElementById('g-exp').value || null,
+             bio: document.getElementById('g-bio').value.trim(),
+             linkedin_url: li || null,
+             availability: document.getElementById('g-avail').value || null
+           }).eq('user_id', me.id), 'Profile saved.');
+      if (ok) { profile.full_name = name; refresh('profile'); }
+    };
+  }
+
+  function clamp(v, lo, hi, dflt) {
+    const n = parseInt(v, 10);
+    return isNaN(n) ? dflt : Math.max(lo, Math.min(hi, n));
+  }
+
+  function serviceEditor(s) {
+    openModal(`
+      <div class="modal-head"><h3>Edit service</h3><button class="x" data-close aria-label="Close">×</button></div>
+      <div class="field"><label for="e-title">Title</label><input id="e-title" maxlength="120" value="${esc(s.title)}"></div>
+      <div class="field"><label for="e-desc">Short description</label><input id="e-desc" maxlength="500" value="${esc(s.description || '')}"></div>
+      <div class="row2">
+        <div class="field"><label for="e-mins">Duration (minutes)</label><input id="e-mins" type="number" min="15" max="240" step="15" value="${s.duration_min}"></div>
+        <div class="field"><label for="e-price">Price (₹)</label><input id="e-price" type="number" min="0" max="100000" step="50" value="${s.price_inr}"></div>
+      </div>
+      <p class="demo-note">Changes apply to new bookings. Existing bookings keep the price agreed at booking time.</p>
+      <div class="bk-actions"><button class="btn" type="button" id="e-save">Save changes</button><button class="btn ghost" type="button" id="e-del">Delete service</button></div>`);
+    document.getElementById('e-save').onclick = async () => {
+      const title = document.getElementById('e-title').value.trim();
+      if (title.length < 3) return NR.toast('Give the service a title (at least 3 characters).', true);
+      const ok = await run(sb.from('services').update({
+        title, description: document.getElementById('e-desc').value.trim(),
+        duration_min: clamp(document.getElementById('e-mins').value, 15, 240, s.duration_min),
+        price_inr: clamp(document.getElementById('e-price').value, 0, 100000, s.price_inr)
+      }).eq('id', s.id), 'Service updated.');
+      if (ok) { closeModal(); activeTab = 'services'; guideView(); }
+    };
+    document.getElementById('e-del').onclick = () => confirmBox('Delete this service?', `${esc(s.title)} will be removed. Past bookings are kept.`, 'Delete', async () => {
+      if (await run(sb.from('services').delete().eq('id', s.id), 'Service deleted.')) { activeTab = 'services'; guideView(); }
+    });
+  }
+
+  function scorecardEditor(b) {
+    const existing = b.scorecard;
+    const crit = existing && Array.isArray(existing.criteria) && existing.criteria.length
+      ? existing.criteria.map(c => ({ name: String(c.name || ''), score: Number(c.score) || 0 }))
+      : DEFAULT_CRITERIA.map(name => ({ name, score: 0 }));
+    openModal(`
+      <div class="modal-head"><div><h3>Scorecard</h3><div class="meta">${esc(b.learner_name)} · ${esc(b.service_title)}</div></div><button class="x" data-close aria-label="Close">×</button></div>
+      <div class="stack" id="sc-rows">${crit.map((c, i) => `
+        <div class="sc-row" data-row="${i}">
+          <input type="text" value="${esc(c.name)}" maxlength="60" aria-label="Criterion ${i + 1}">
+          <div class="score-pick">${[1,2,3,4,5].map(n => `<button type="button" data-score="${n}" aria-pressed="${n === c.score}">${n}</button>`).join('')}</div>
+        </div>`).join('')}</div>
+      <div class="field"><label for="sc-note">Overall note</label><textarea id="sc-note" maxlength="2000" placeholder="What went well, and what cost them marks.">${esc(existing ? existing.note : '')}</textarea></div>
+      <div class="field"><label for="sc-fixes">Priority fixes (one per line)</label><textarea id="sc-fixes" maxlength="1000" placeholder="1. Restate business impact before agreeing to trade-offs">${esc(existing ? existing.fixes : '')}</textarea></div>
+      <button class="btn" type="button" id="sc-save">Save scorecard</button>`);
+    modalBody.querySelectorAll('.sc-row').forEach(row => {
+      row.querySelectorAll('[data-score]').forEach(btn => btn.onclick = () =>
+        row.querySelectorAll('[data-score]').forEach(x => x.setAttribute('aria-pressed', x === btn ? 'true' : 'false')));
+    });
+    document.getElementById('sc-save').onclick = async () => {
+      const criteria = [...modalBody.querySelectorAll('.sc-row')].map(row => ({
+        name: row.querySelector('input').value.trim(),
+        score: Number((row.querySelector('[aria-pressed="true"]') || {}).dataset?.score || 0)
+      })).filter(c => c.name);
+      if (criteria.some(c => !c.score)) return NR.toast('Give each criterion a score from 1 to 5.', true);
+      const payload = {
+        booking_id: b.id, criteria,
+        note: document.getElementById('sc-note').value.trim(),
+        fixes: document.getElementById('sc-fixes').value.trim()
+      };
+      const q = existing ? sb.from('scorecards').update(payload).eq('booking_id', b.id) : sb.from('scorecards').insert(payload);
+      if (await run(q, 'Scorecard shared with the learner.')) { closeModal(); guideView(); }
+    };
+  }
+
+  // =====================================================================
+  // ADMIN
+  // =====================================================================
+  async function adminView() {
+    const [gps, profs, contacts, bookings, learners] = await Promise.all([
+      sb.from('guide_profiles').select('*').order('created_at', { ascending: false }),
+      sb.from('profiles').select('id, full_name, role, created_at'),
+      sb.from('contacts').select('user_id, email, phone'),
+      sb.from('bookings').select('*').order('created_at', { ascending: false }).limit(100),
+      sb.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'learner')
+    ]);
+    const err = [gps, profs, contacts, bookings].find(r => r.error);
+    if (err) throw err.error;
+    const P = byId(profs.data, 'id'), C = byId(contacts.data, 'user_id');
+    const guides = gps.data || [];
+    const pending = guides.filter(g => !g.is_verified);
+    const verified = guides.filter(g => g.is_verified);
+    const bk = bookings.data || [];
+    const tab = activeTab || (pending.length ? 'pending' : 'guides');
+    const count = s => bk.filter(b => b.status === s).length;
+
+    const guideCard = g => {
+      const p = P[g.user_id] || {}, c = C[g.user_id] || {};
+      const li = NR.safeUrl(g.linkedin_url);
+      return `
+        <div class="bk">
+          <div class="bk-top">
+            <div><div class="bk-title">${esc(p.full_name || 'Unnamed')}${g.headline ? ' · ' + esc(g.headline) : ''}</div>
+              <div class="bk-meta">${esc([g.field, g.years_experience, g.availability].filter(Boolean).join(' · ') || 'Profile incomplete')}</div>
+              <div class="bk-meta">${esc(c.email || '')}${c.phone ? ' · ' + esc(c.phone) : ''} · joined ${NR.when(g.created_at).replace(/,.*$/, '')}</div></div>
+            ${g.is_verified ? '<span class="st st-accepted">verified</span>' : '<span class="st st-requested">pending</span>'}
+          </div>
+          ${g.bio ? `<div class="bk-note">${esc(g.bio)}</div>` : ''}
+          <div class="bk-actions">
+            ${li ? `<a class="btn ghost xs" href="${esc(li)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : '<span class="bk-meta">No LinkedIn link</span>'}
+            <button class="btn xs" type="button" data-act="${g.is_verified ? 'unverify' : 'verify'}" data-id="${g.user_id}">${g.is_verified ? 'Remove verification' : 'Verify guide'}</button>
+          </div>
+        </div>`;
+    };
+
+    root.innerHTML = `
+      <div class="page-head"><div><div class="meta">Admin</div><h1 style="font-size:clamp(1.8rem,4vw,2.4rem)">${greeting()}, ${esc(firstName())}</h1></div></div>
+      <div class="stats" style="margin-bottom:22px">
+        <div class="stat"><div class="n">${learners.count ?? '–'}</div><div class="l">Learners</div></div>
+        <div class="stat"><div class="n">${verified.length} <small class="muted" style="font-size:.9rem">/ ${guides.length}</small></div><div class="l">Verified guides / all guides</div></div>
+        <div class="stat"><div class="n">${count('requested') + count('accepted')}</div><div class="l">Open bookings (${count('completed')} completed)</div></div>
+      </div>
+      ${tabs([{ id: 'pending', label: 'To verify', badge: pending.length }, { id: 'guides', label: 'Verified guides' }, { id: 'bookings', label: 'Recent bookings' }], tab)}
+      <div data-panel="pending" class="stack" ${tab !== 'pending' ? 'hidden' : ''}>${pending.map(guideCard).join('') || '<div class="empty">No guides waiting for verification.</div>'}</div>
+      <div data-panel="guides" class="stack" ${tab !== 'guides' ? 'hidden' : ''}>${verified.map(guideCard).join('') || '<div class="empty">No verified guides yet.</div>'}</div>
+      <div data-panel="bookings" class="stack" ${tab !== 'bookings' ? 'hidden' : ''}>${bk.map(b => `
+        <div class="bk"><div class="bk-top"><div>
+          <div class="bk-title">${esc((P[b.learner_id] || {}).full_name || 'Learner')} → ${esc((P[b.guide_id] || {}).full_name || 'Guide')}</div>
+          <div class="bk-meta">${esc(b.service_title)} · ${NR.when(b.scheduled_at)} · ${NR.inr(b.price_inr)}</div></div>${status(b.status)}</div></div>`).join('')
+        || '<div class="empty">No bookings yet.</div>'}</div>`;
+
+    root.onclick = async e => {
+      const t = e.target.closest('[data-tab]');
+      if (t) { activeTab = t.dataset.tab; return adminView(); }
+      const a = e.target.closest('[data-act]');
+      if (!a) return;
+      const verify = a.dataset.act === 'verify';
+      if (await run(sb.from('guide_profiles').update({ is_verified: verify }).eq('user_id', a.dataset.id), verify ? 'Guide verified. They now appear in the directory.' : 'Verification removed.')) adminView();
+    };
+  }
+
+  // =====================================================================
+  (async function init() {
+    if (!NR.ready) { root.innerHTML = NR.notReadyHtml(); return; }
+    me = await NR.user();
+    if (!me) { location.replace(NR.loginUrl()); return; }
+    try {
+      profile = await NR.profile(me.id);
+    } catch (e) {
+      root.innerHTML = `<div class="notice bad">We couldn't find your profile. If this account was created before the database was set up, sign up again with a new email or ask the admin to reset it.</div>`;
+      return;
+    }
+    const view = profile.role === 'admin' ? adminView : profile.role === 'guide' ? guideView : learnerView;
+    try { await view(); }
+    catch (e) { root.innerHTML = `<div class="notice bad">${esc(NR.explain(e))}</div>`; }
+  })();
+})();
+</script>
+</body>
+</html>

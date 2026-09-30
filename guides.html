@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Find a guide · NextRung</title>
+<meta name="description" content="Browse verified professionals on NextRung and book a mock panel, career roadmap or resume review.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 18 18"><path d="M5 1v16M13 1v16" stroke="var(--paper)" stroke-width="2" stroke-linecap="round"/><path d="M5 14h8M5 9h8" stroke="var(--paper)" stroke-width="2"/><path d="M5 4h8" stroke="var(--accent)" stroke-width="2.4"/></svg></span><span>Next<b>Rung</b></span></a>
+    <nav class="links" aria-label="Main"><a href="guides.html" aria-current="page">Find a guide</a><a href="index.html#services">Services</a><a href="index.html#plans">Pricing</a><a href="index.html#faq">FAQ</a></nav>
+    <div class="nav-cta" data-auth-slot></div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap">
+    <div class="page-head">
+      <div>
+        <span class="eyebrow">Guides</span>
+        <h1 style="font-size:clamp(1.9rem,4vw,2.6rem)">Find a professional in your field</h1>
+        <p class="sub">Every guide here is verified. Pick one, choose a service and request a time.</p>
+      </div>
+    </div>
+    <div id="not-ready"></div>
+    <div class="filters" role="tablist" aria-label="Filter by field" id="gfilters"></div>
+    <div class="guides" id="glist"><p class="spinner">Loading guides…</p></div>
+  </div>
+</main>
+
+<dialog class="modal" id="gdialog" aria-labelledby="gd-name">
+  <div class="modal-body" id="gd-body"></div>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/core.js"></script>
+<script>
+(function () {
+  const esc = NR.esc;
+  const gf = document.getElementById('gfilters');
+  const gl = document.getElementById('glist');
+  const dlg = document.getElementById('gdialog');
+  const body = document.getElementById('gd-body');
+  let rows = [];
+  let me = null;
+
+  if (!NR.ready) {
+    document.getElementById('not-ready').innerHTML = NR.notReadyHtml();
+    gl.innerHTML = '';
+    return;
+  }
+
+  function render(filter) {
+    [...gf.children].forEach(b => b.setAttribute('aria-selected', b.dataset.f === filter ? 'true' : 'false'));
+    const list = rows.filter(g => filter === 'All fields' || g.field === filter);
+    if (!list.length) {
+      gl.innerHTML = `<div class="empty" style="grid-column:1/-1">${rows.length ? 'No verified guides in this field yet. Try another field.' : 'No verified guides yet. Check back soon.'}</div>`;
+      return;
+    }
+    gl.innerHTML = list.map(g => `
+      <article class="guide">
+        <div class="g-top"><span class="av" aria-hidden="true">${esc(NR.initials(g.full_name))}</span>
+          <div><div class="g-role">${esc(g.full_name)}</div><div class="meta">${esc(g.headline || g.field || '')}</div></div></div>
+        <p class="muted" style="font-size:.9rem">${esc([g.field, g.years_experience].filter(Boolean).join(' · '))}</p>
+        ${g.bio ? `<p style="font-size:.9rem">${esc(g.bio.slice(0, 140))}${g.bio.length > 140 ? '…' : ''}</p>` : ''}
+        <div class="g-foot">
+          <span><span class="g-price">${g.from_price != null ? 'From ' + NR.inr(g.from_price) : 'No services yet'}</span>${g.review_count ? ` · <span class="rating">★ ${esc(g.rating)} (${g.review_count})</span>` : ''}</span>
+          <button class="btn xs" type="button" data-open="${esc(g.guide_id)}">View &amp; book</button>
+        </div>
+      </article>`).join('');
+  }
+
+  ['All fields', ...NR.FIELDS].forEach((n, i) => {
+    const b = document.createElement('button');
+    b.className = 'tab'; b.type = 'button'; b.setAttribute('role', 'tab'); b.id = 'gf-' + i;
+    b.dataset.f = n; b.textContent = n;
+    b.addEventListener('click', () => render(n));
+    gf.appendChild(b);
+  });
+
+  gl.addEventListener('click', e => {
+    const b = e.target.closest('[data-open]');
+    if (b) open(b.dataset.open);
+  });
+
+  async function open(id) {
+    const g = rows.find(r => r.guide_id === id);
+    if (!g) { NR.toast('That guide is not available.', true); return; }
+    history.replaceState(null, '', 'guides.html?id=' + encodeURIComponent(id));
+    body.innerHTML = '<p class="spinner">Loading…</p>';
+    if (!dlg.open) dlg.showModal();
+
+    const [svc, rev] = await Promise.all([
+      NR.sb.from('services').select('id,title,description,duration_min,price_inr').eq('guide_id', id).eq('is_active', true).order('price_inr'),
+      NR.sb.from('reviews').select('rating,comment,created_at').eq('guide_id', id).order('created_at', { ascending: false }).limit(5)
+    ]);
+    const services = svc.data || [];
+    const reviews = rev.data || [];
+    const li = NR.safeUrl(g.linkedin_url);
+    const today = new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
+
+    let bookHtml;
+    if (!services.length) {
+      bookHtml = '<div class="empty">This guide has not listed any services yet.</div>';
+    } else if (!me) {
+      bookHtml = `<div class="notice">Sign in or create a free account to request a session.</div>
+        <a class="btn" href="${NR.loginUrl()}">Sign in to book</a>`;
+    } else if (me.id === id) {
+      bookHtml = '<div class="notice">This is your own profile.</div>';
+    } else {
+      bookHtml = `
+        <form class="stack" id="book-form" novalidate>
+          <h3>Request a session</h3>
+          <div class="field"><label for="bk-svc">Service</label>
+            <select id="bk-svc">${services.map(s => `<option value="${esc(s.id)}">${esc(s.title)} · ${s.duration_min} min · ${NR.inr(s.price_inr)}</option>`).join('')}</select></div>
+          <div class="slot-row">
+            <div class="field"><label for="bk-date">Date</label><input id="bk-date" type="date" min="${today}" value="${today}"></div>
+            <div class="field"><label for="bk-time">Time (IST)</label><input id="bk-time" type="time" value="18:30" step="900"></div>
+          </div>
+          <div class="field"><label for="bk-note">What would you like help with?</label>
+            <textarea id="bk-note" maxlength="1000" placeholder="e.g. BA interview at a product company next week; I struggle with stakeholder questions."></textarea></div>
+          <button class="btn" type="submit">Send request</button>
+          <p class="demo-note">The guide confirms the time and shares a meeting link. Payment is arranged directly for now.</p>
+        </form>`;
+    }
+
+    body.innerHTML = `
+      <div class="modal-head">
+        <div class="g-top"><span class="av" aria-hidden="true">${esc(NR.initials(g.full_name))}</span>
+          <div><h3 id="gd-name">${esc(g.full_name)}</h3><div class="meta">${esc(g.headline || '')}</div></div></div>
+        <button class="x" type="button" aria-label="Close" data-close>×</button>
+      </div>
+      <div class="g-detail">
+        <div class="g-tags">${[g.field, g.years_experience, g.availability].filter(Boolean).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+        ${g.bio ? `<p class="bio">${esc(g.bio)}</p>` : ''}
+        ${li ? `<a class="meet" href="${esc(li)}" target="_blank" rel="noopener">LinkedIn profile ↗</a>` : ''}
+        <div>
+          <span class="w-h">Services</span>
+          <div class="svc-list">${services.map(s => `
+            <div class="svc-row"><div><div class="t">${esc(s.title)}</div><div class="d">${s.duration_min} min${s.description ? ' · ' + esc(s.description) : ''}</div></div><span class="g-price">${NR.inr(s.price_inr)}</span><span></span></div>`).join('') || '<p class="muted">None listed yet.</p>'}</div>
+        </div>
+        ${reviews.length ? `<div><span class="w-h">Recent reviews</span>${reviews.map(r => `
+          <div class="li"><div><div class="rating">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>${r.comment ? `<div class="sub">${esc(r.comment)}</div>` : ''}</div></div>`).join('')}</div>` : ''}
+        ${bookHtml}
+      </div>`;
+
+    const form = document.getElementById('book-form');
+    if (form) form.addEventListener('submit', e => submitBooking(e, id));
+  }
+
+  async function submitBooking(e, guideId) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type=submit]');
+    const date = document.getElementById('bk-date').value;
+    const time = document.getElementById('bk-time').value;
+    if (!date || !time) { NR.toast('Choose a date and time.', true); return; }
+    const scheduled = new Date(`${date}T${time}:00+05:30`);
+    if (isNaN(scheduled) || scheduled.getTime() < Date.now() + 2 * 3600e3) {
+      NR.toast('Choose a time at least 2 hours from now.', true); return;
+    }
+    btn.disabled = true;
+    const { error } = await NR.sb.from('bookings').insert({
+      learner_id: me.id,
+      guide_id: guideId,
+      service_id: document.getElementById('bk-svc').value,
+      scheduled_at: scheduled.toISOString(),
+      learner_note: document.getElementById('bk-note').value.trim()
+    });
+    btn.disabled = false;
+    if (error) { NR.toast(NR.explain(error), true); return; }
+    body.innerHTML = `
+      <div class="modal-head"><h3>Request sent</h3><button class="x" type="button" aria-label="Close" data-close>×</button></div>
+      <p>Your guide will confirm the time and add a meeting link. You'll see the status in your dashboard.</p>
+      <div class="bk-actions"><a class="btn" href="dashboard.html">Go to dashboard</a><button class="btn ghost" type="button" data-close>Keep browsing</button></div>`;
+  }
+
+  body.addEventListener('click', e => { if (e.target.closest('[data-close]')) dlg.close(); });
+  dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+  dlg.addEventListener('close', () => history.replaceState(null, '', 'guides.html'));
+
+  (async function init() {
+    me = await NR.user();
+    const { data, error } = await NR.sb.from('guide_directory').select('*').order('review_count', { ascending: false });
+    if (error) { gl.innerHTML = `<div class="notice bad" style="grid-column:1/-1">${esc(NR.explain(error))}</div>`; return; }
+    rows = data || [];
+    const params = new URLSearchParams(location.search);
+    const field = params.get('field');
+    render(NR.FIELDS.includes(field) ? field : 'All fields');
+    if (params.get('id')) open(params.get('id'));
+  })();
+})();
+</script>
+</body>
+</html>
