@@ -45,7 +45,13 @@
       { id: 'sl4', guide_id: 'g1', starts_at: noon(5) },
       { id: 'sl5', guide_id: 'g1', starts_at: noon(5, 1) }
     ],
-    guide_directory: [{ guide_id: 'g1', full_name: 'Rahul Deshmukh', headline: 'Senior Business Analyst', field: 'Business Analysis', years_experience: '5–10 years', bio: 'Nine years in ERP and supply chain.', linkedin_url: 'https://linkedin.com/in/rahul', availability: 'Both', from_price: 999, rating: null, review_count: 0 }]
+    guide_directory: [
+      { guide_id: 'g4', full_name: 'Neha Kulkarni', headline: 'Analytics Manager', field: 'Data Analytics', years_experience: '5–10 years', bio: 'Eight years in retail and FMCG analytics. I run SQL rounds and case interviews for analyst roles.', linkedin_url: null, availability: 'Weekday evenings', from_price: 999, rating: 4.9, review_count: 23 },
+      { guide_id: 'g5', full_name: 'Arjun Mehra', headline: 'Engineering Lead', field: 'Software Development', years_experience: '10–15 years', bio: 'Backend and system design interviews for product companies. Ex-hiring manager.', linkedin_url: null, availability: 'Weekends', from_price: 1499, rating: 4.8, review_count: 31 },
+      { guide_id: 'g6', full_name: 'Priya Iyer', headline: 'QA Manager', field: 'Quality Assurance', years_experience: '10–15 years', bio: 'Automation, test strategy and QA-to-BA career switches.', linkedin_url: null, availability: 'Both', from_price: 899, rating: 4.7, review_count: 18 },
+      { guide_id: 'g7', full_name: 'Sameer Joshi', headline: 'Brand Manager', field: 'Marketing', years_experience: '5–10 years', bio: 'FMCG brand launches in Tier-2 cities; go-to-market case rounds.', linkedin_url: null, availability: 'Weekday evenings', from_price: 899, rating: 4.6, review_count: 12 },
+      { guide_id: 'g8', full_name: 'Vandana Gupta', headline: 'Delivery Head', field: 'Leadership', years_experience: '15+ years', bio: 'Built and led teams of 60+. Promotion prep and first-time manager coaching.', linkedin_url: null, availability: 'Both', from_price: 1999, rating: 4.9, review_count: 27 },
+      { guide_id: 'g1', full_name: 'Rahul Deshmukh', headline: 'Senior Business Analyst', field: 'Business Analysis', years_experience: '5–10 years', bio: 'Nine years in ERP and supply chain.', linkedin_url: 'https://linkedin.com/in/rahul', availability: 'Both', from_price: 999, rating: 4.8, review_count: 37 }]
   };
   window.__writes = [];
 
