@@ -46,6 +46,37 @@
     options(list, selected) {
       return list.map(v => `<option${v === selected ? ' selected' : ''}>${NR.esc(v)}</option>`).join('');
     },
+    // Round profile photo, or initials when there's no photo.
+    avatar(name, url, size) {
+      const px = size || 44;
+      const safe = /^https:\/\/[^/]+\/storage\/v1\/object\/public\/avatars\//.test(url || '') ? url : '';
+      return `<span class="av" style="width:${px}px;height:${px}px;font-size:${Math.round(px * 0.34)}px" aria-hidden="true">${
+        NR.esc(NR.initials(name))}${safe ? `<img src="${NR.esc(safe)}" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>`;
+    },
+
+    // Crop to a square, shrink to 400px and upload as the user's profile photo. Returns the new URL.
+    async uploadAvatar(file, uid) {
+      if (!file || !/^image\/(jpeg|png|webp|heic|heif)$/i.test(file.type || 'image/jpeg')) throw new Error('Choose a JPG, PNG or WebP photo.');
+      if (file.size > 15 * 1024 * 1024) throw new Error('That photo is too large. Choose one under 15 MB.');
+      const img = await new Promise((ok, bad) => {
+        const i = new Image(); const u = URL.createObjectURL(file);
+        i.onload = () => { URL.revokeObjectURL(u); ok(i); };
+        i.onerror = () => { URL.revokeObjectURL(u); bad(new Error('That file could not be read as a photo.')); };
+        i.src = u;
+      });
+      const side = Math.min(img.naturalWidth, img.naturalHeight), out = 400;
+      const c = document.createElement('canvas'); c.width = out; c.height = out;
+      c.getContext('2d').drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, out, out);
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.86));
+      const path = `${uid}/avatar.jpg`;
+      const up = await sb.storage.from('avatars').upload(path, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '3600' });
+      if (up.error) throw up.error;
+      const url = sb.storage.from('avatars').getPublicUrl(path).data.publicUrl + '?v=' + Date.now();
+      const { error } = await sb.from('profiles').update({ avatar_url: url }).eq('id', uid);
+      if (error) throw error;
+      return url;
+    },
+
     safeUrl(u) {
       return /^https:\/\//i.test(u || '') ? u : '';
     },
@@ -100,6 +131,7 @@
     // Turn database and auth errors into sentences people can act on.
     explain(err) {
       const m = (err && (err.message || err.error_description || String(err))) || 'Something went wrong.';
+      if (/avatar_url|payout_upi|Bucket not found|bucket/i.test(m)) return 'The database needs an update first: run supabase/migrations/004_profile_photos.sql in the Supabase SQL Editor.';
       if (/is_rejected/.test(m)) return 'The database needs an update first: run supabase/migrations/002_guide_rejection.sql in the Supabase SQL Editor.';
       if (/open_slots|availability_slots|reschedule_booking|slot_id|could not find the function/i.test(m)) return 'The database needs an update first: run supabase/migrations/003_slots_and_reschedule.sql in the Supabase SQL Editor.';
       if (/bookings_one_per_slot/.test(m)) return 'That time slot has just been taken. Please choose another.';
@@ -123,7 +155,7 @@
     },
 
     async profile(uid) {
-      const { data, error } = await sb.from('profiles').select('id, role, full_name').eq('id', uid).single();
+      const { data, error } = await sb.from('profiles').select('*').eq('id', uid).single();
       if (error) throw error;
       return data;
     },

@@ -137,3 +137,17 @@ dialog.modal:focus,dialog.modal:focus-visible{outline:none}
 .resched-note{font-size:.82rem;color:var(--accent-ink)}
 .view-switch{display:inline-flex;gap:6px;flex-wrap:wrap}
 .field-legend{font-size:.85rem;font-weight:600}
+
+/* profile and plan */
+.who-head{display:flex;align-items:center;gap:14px;min-width:0}
+.who-head.sm{gap:10px}
+.who-head .av{flex:none}
+.verified{color:var(--success);font-weight:600}
+.photo-row{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.pay-list,.pack-list{display:flex;flex-direction:column}
+.pay-row,.pack{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}
+.pay-row:last-child,.pack:last-child{border-bottom:0}
+.pay-amt{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none;text-align:right}
+.pay-opt{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.92rem}
+.pay-opt:last-child{border-bottom:0}
+.pay-opt p{color:var(--muted)}

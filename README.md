@@ -14,15 +14,15 @@ NextRung is a two-sided career platform. Learners, from final-year students to e
 | Guide directory | Public list of verified guides, filter by field, profile with services and reviews |
 | Booking | Learners pick a service, then one of the guide's open date-wise time slots (IST); prices are locked at booking time |
 | Reschedule | Learners and guides can move an upcoming session to another free slot; a learner's change needs the guide's OK |
-| Learner dashboard | Upcoming and past sessions, meeting links, cancel, scorecards, star ratings, profile |
-| Guide dashboard | Requests to accept or reject, availability slots (with weekly repeat), meeting links, start session (placeholder), mark completed, scorecards, services, earnings, profile |
+| Learner dashboard | Upcoming and past sessions, reschedule, cancel, scorecards, ratings, profile with photo and password, plan and payment history |
+| Guide dashboard | Requests to accept or reject, availability slots (with weekly repeat), meeting links, start session (placeholder), mark completed, scorecards, services, profile with photo, plan, earnings history and UPI payout details |
 | Admin dashboard | Accept or reject guide applications, accept/reject/cancel/reschedule bookings, switch to own guide dashboard |
 
 Not included yet: online payments, built-in video calls, email notifications for bookings. Guides paste a Google Meet or Zoom link for now.
 
 ## How it's built
 
-- **Front end:** plain HTML, CSS and JavaScript, hosted on GitHub Pages. No build step.
+- **Front end:** plain HTML, CSS and JavaScript, hosted on GitHub Pages. No build step. Theme in `css/theme.css` (navy and blue, Inter).
 - **Back end:** [Supabase](https://supabase.com) (Postgres database + authentication). The browser talks to Supabase directly using the public anon key.
 - **Security:** every table has row-level security. Learners only see their own bookings, guides only see bookings made with them, contact details are private, only admins can verify guides, and prices and statuses are enforced in the database, not the browser. See `supabase/schema.sql`.
 
@@ -60,6 +60,7 @@ Schema changes ship as numbered files in `supabase/migrations/`. Run each new fi
 |---|---|
 | `002_guide_rejection.sql` | Admins can reject guide applications |
 | `003_slots_and_reschedule.sql` | Guide time slots, slot-based booking, rescheduling |
+| `004_profile_photos.sql` | Profile photos (storage bucket), guide UPI payout details |
 
 ## Testing
 

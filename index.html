@@ -7,9 +7,11 @@
 <title>NextRung</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="css/site.css">
 <link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/theme.css">
+<meta name="theme-color" content="#0B2545">
 </head>
 <body>
 
@@ -19,7 +21,6 @@
     <nav class="links" aria-label="Sections">
       <a href="#services">Services</a>
       <a href="#how">How it works</a>
-      <a href="#guides">Guides</a>
       <a href="guides.html">Find a guide</a>
       <a href="#plans">Pricing</a>
       <a href="#faq">FAQ</a>
@@ -375,10 +376,17 @@
   </section>
 </main>
 
-<footer>
+<footer class="site-foot">
   <div class="wrap">
-    <span>NextRung · Career guidance from people one rung ahead · concept preview</span>
-    <span>Pune, India · Online across India</span>
+    <div class="f-brand"><strong>NextRung</strong><span>Career guidance from verified professionals, for freshers and experienced people across India.</span></div>
+    <nav aria-label="Footer">
+      <a href="guides.html">Find a guide</a>
+      <a href="login.html?mode=signup&amp;role=guide">Become a guide</a>
+      <a href="index.html#services">Services</a>
+      <a href="index.html#plans">Pricing</a>
+      <a href="index.html#faq">FAQ</a>
+    </nav>
+    <div class="f-legal">© 2026 NextRung · Pune, India · Sessions are online, across India</div>
   </div>
 </footer>
 
@@ -497,7 +505,7 @@ function renderGuides(filter){
   if (!list.length) { gl.innerHTML = '<p class="muted">No guides in this field yet.</p>'; return; }
   gl.innerHTML = list.map(g => `
     <article class="guide">
-      <div class="g-top"><span class="av" aria-hidden="true">${esc(g.i)}</span><div><div class="g-role">${esc(g.role)}</div><div class="meta">${esc(g.field)}</div></div></div>
+      <div class="g-top">${g.live ? NR.avatar(g.full, g.photo, 44) : `<span class="av" aria-hidden="true">${esc(g.i)}</span>`}<div><div class="g-role">${esc(g.role)}</div><div class="meta">${esc(g.field)}</div></div></div>
       <p class="muted" style="font-size:.9rem">${esc(g.exp)}</p>
       <div class="g-tags">${g.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
       <div class="g-foot"><span><span class="g-price">${g.price ? 'From ' + esc(g.price) : 'Price on request'}</span>${g.rating ? ` · <span class="rating">★ ${esc(g.rating)}</span>` : ''}</span><a class="btn xs" href="${g.live ? 'guides.html?id=' + encodeURIComponent(g.id) : 'guides.html'}">${g.live ? 'View & book' : 'Browse'}</a></div>
@@ -516,7 +524,7 @@ if (window.NR && NR.ready) {
   NR.sb.from('guide_directory').select('*').limit(24).then(({ data, error }) => {
     if (error || !data || !data.length) return;
     GUIDE_ROWS = data.map(g => ({
-      live: true, id: g.guide_id, i: NR.initials(g.full_name),
+      live: true, id: g.guide_id, i: NR.initials(g.full_name), full: g.full_name, photo: g.avatar_url,
       role: g.full_name + (g.headline ? ' · ' + g.headline : ''), field: g.field || 'General',
       exp: [g.years_experience, g.availability].filter(Boolean).join(' · '),
       tags: [g.field, g.years_experience].filter(Boolean),

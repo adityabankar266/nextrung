@@ -6,9 +6,11 @@
 <title>Dashboard · NextRung</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="css/site.css">
 <link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/theme.css">
+<meta name="theme-color" content="#0B2545">
 </head>
 <body>
 <header class="top">
@@ -24,6 +26,20 @@
 </main>
 
 <dialog class="modal" id="modal"><div class="modal-body" id="modal-body"></div></dialog>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="f-brand"><strong>NextRung</strong><span>Career guidance from verified professionals, for freshers and experienced people across India.</span></div>
+    <nav aria-label="Footer">
+      <a href="guides.html">Find a guide</a>
+      <a href="login.html?mode=signup&amp;role=guide">Become a guide</a>
+      <a href="index.html#services">Services</a>
+      <a href="index.html#plans">Pricing</a>
+      <a href="index.html#faq">FAQ</a>
+    </nav>
+    <div class="f-legal">© 2026 NextRung · Pune, India · Sessions are online, across India</div>
+  </div>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
 <script src="js/config.js"></script>
@@ -54,6 +70,71 @@
       ${link ? `<a class="btn" href="${esc(link)}" target="_blank" rel="noopener">Open meeting link for now</a>` : '<p class="muted">No meeting link has been added for this session yet.</p>'}
       <button class="btn ghost" type="button" data-close>Close</button>`);
   }
+  // ---------- profile pieces shared by learners, guides and admins ----------
+  function whoHead(meta, extra) {
+    return `<div class="page-head">
+      <div class="who-head">${NR.avatar(profile.full_name, profile.avatar_url, 56)}
+        <div><div class="meta">${meta}</div><h1 style="font-size:clamp(1.6rem,3.6vw,2.2rem)">${greeting()}, ${esc(firstName())}</h1></div></div>
+      ${extra || ''}</div>`;
+  }
+  function photoCard() {
+    return `<div class="card">
+      <h3>Profile photo</h3>
+      <div class="photo-row">${NR.avatar(profile.full_name, profile.avatar_url, 88)}
+        <div class="stack" style="gap:8px">
+          <label class="btn ghost sm" for="ph-file" style="align-self:flex-start">${profile.avatar_url ? 'Change photo' : 'Upload photo'}</label>
+          <input id="ph-file" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+          ${profile.avatar_url ? '<button class="linkish" type="button" id="ph-remove" style="align-self:flex-start">Remove photo</button>' : ''}
+          <p class="demo-note">A clear, front-facing photo builds trust. We crop and resize it for you.</p>
+        </div>
+      </div>
+    </div>`;
+  }
+  function securityCard() {
+    return `<form class="card" id="pw-form" novalidate>
+      <h3>Sign-in and security</h3>
+      <div class="field"><label for="pw-email">Email</label><input id="pw-email" value="${esc(me.email)}" readonly></div>
+      <div class="row2">
+        <div class="field"><label for="pw-new">New password</label><input id="pw-new" type="password" autocomplete="new-password" minlength="8"></div>
+        <div class="field"><label for="pw-confirm">Confirm password</label><input id="pw-confirm" type="password" autocomplete="new-password"></div>
+      </div>
+      <button class="btn ghost" type="submit" style="align-self:flex-start">Change password</button>
+    </form>`;
+  }
+  function wireAccount(rerender) {
+    const f = document.getElementById('ph-file');
+    if (f) f.onchange = async () => {
+      const file = f.files && f.files[0];
+      if (!file) return;
+      NR.toast('Uploading photo…');
+      try { profile.avatar_url = await NR.uploadAvatar(file, me.id); NR.toast('Photo updated.'); rerender(); }
+      catch (err) { NR.toast(NR.explain(err), true); }
+    };
+    const rm = document.getElementById('ph-remove');
+    if (rm) rm.onclick = () => confirmBox('Remove your photo?', 'Your initials will show instead.', 'Remove photo', async () => {
+      await sb.storage.from('avatars').remove([`${me.id}/avatar.jpg`]);
+      if (await run(sb.from('profiles').update({ avatar_url: null }).eq('id', me.id), 'Photo removed.')) { profile.avatar_url = null; rerender(); }
+    });
+    const pw = document.getElementById('pw-form');
+    if (pw) pw.onsubmit = async e => {
+      e.preventDefault();
+      const a = document.getElementById('pw-new').value, b = document.getElementById('pw-confirm').value;
+      if (a.length < 8) return NR.toast('Use a password with at least 8 characters.', true);
+      if (a !== b) return NR.toast("The two passwords don't match.", true);
+      if (await run(sb.auth.updateUser({ password: a }), 'Password changed.')) pw.reset();
+    };
+  }
+  const PAY_STATUS = { requested: ['Not due yet', 'st-requested'], accepted: ['Pay guide directly', 'st-accepted'], completed: ['Pay guide directly', 'st-completed'], declined: ['No charge', 'st-cancelled'], cancelled: ['No charge', 'st-cancelled'] };
+  function paymentOptionsCard(forGuide) {
+    return `<div class="card">
+      <h3>Payment options</h3>
+      <div class="pay-opt"><span class="st st-accepted">Available now</span>
+        <p>${forGuide ? 'Learners pay you directly by UPI or bank transfer after you confirm a session. Share your UPI ID in the session note or meeting.' : 'Pay your guide directly by UPI or bank transfer after they confirm your session.'}</p></div>
+      <div class="pay-opt"><span class="st st-requested">Coming soon</span>
+        <p>${forGuide ? 'Secure online checkout. Learners pay NextRung at booking and we send your share to your UPI ID every week.' : 'Secure online checkout at booking: UPI, cards, net banking and wallets, with receipts saved here.'}</p></div>
+    </div>`;
+  }
+
   // Who moved this session last, in words for the person reading it.
   function rescheduleNote(b, viewer) {
     if (!b.last_rescheduled_by || !['requested', 'accepted'].includes(b.status)) return '';
@@ -114,7 +195,7 @@
     const ids = bookings.map(b => b.id);
     const people = [...new Set(bookings.flatMap(b => [b.learner_id, b.guide_id]))];
     const [names, guides, learners, cards, reviews] = await Promise.all([
-      people.length ? sb.from('profiles').select('id, full_name').in('id', people) : { data: [] },
+      people.length ? sb.from('profiles').select('*').in('id', people) : { data: [] },
       column === 'learner_id' && people.length ? sb.from('guide_profiles').select('user_id, headline').in('user_id', people) : { data: [] },
       column === 'guide_id' && people.length ? sb.from('learner_profiles').select('*').in('user_id', people) : { data: [] },
       ids.length ? sb.from('scorecards').select('*').in('booking_id', ids) : { data: [] },
@@ -125,6 +206,8 @@
     return bookings.map(b => ({
       ...b,
       learner_name: (n[b.learner_id] || {}).full_name || 'Learner',
+      learner_avatar: (n[b.learner_id] || {}).avatar_url || null,
+      guide_avatar: (n[b.guide_id] || {}).avatar_url || null,
       guide_name: (n[b.guide_id] || {}).full_name || 'Guide',
       guide_headline: (g[b.guide_id] || {}).headline || '',
       learner_info: l[b.learner_id] || null,
@@ -152,6 +235,41 @@
   // =====================================================================
   // LEARNER
   // =====================================================================
+  function learnerPlanHtml(bookings) {
+    const done = bookings.filter(b => b.status === 'completed');
+    const booked = bookings.filter(b => ['requested', 'accepted', 'completed'].includes(b.status));
+    const PACKS = [
+      ['Single session', 'Any service from any guide, with scorecard and recording', 'From ₹699'],
+      ['Placement pack', 'One workshop, three mock panels, one case round and a resume review', '₹3,499'],
+      ['Career switch pack', 'Roadmap session, two check-ins, two senior mocks and a LinkedIn rewrite', '₹4,999']];
+    const history = bookings.slice().sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at));
+    return `<div class="grid-main">
+      <div class="stack">
+        <div class="card">
+          <div class="day-head"><h3>Your plan</h3><span class="st st-accepted">Active</span></div>
+          <div><div class="bk-title">Pay per session</div><div class="bk-meta">You pay each guide's listed price for the sessions you book. No subscription.</div></div>
+          ${details([['Sessions booked', String(booked.length)], ['Completed', String(done.length)], ['Value of completed sessions', NR.inr(done.reduce((t, b) => t + b.price_inr, 0))]])}
+        </div>
+        <div class="card">
+          <h3>Payment history</h3>
+          ${history.length ? `<div class="pay-list">${history.map(b => `
+            <div class="pay-row"><div><div class="bk-title" style="font-size:.95rem">${esc(b.service_title)}</div>
+              <div class="bk-meta">${esc(b.guide_name)} · ${NR.when(b.scheduled_at)}</div></div>
+              <div class="pay-amt"><div class="g-price">${NR.inr(b.price_inr)}</div><span class="st ${PAY_STATUS[b.status][1]}">${PAY_STATUS[b.status][0]}</span></div></div>`).join('')}</div>`
+          : '<div class="empty">Your sessions and what you owe for each will appear here.</div>'}
+        </div>
+      </div>
+      <div class="stack">
+        ${paymentOptionsCard(false)}
+        <div class="card">
+          <h3>Packs</h3>
+          ${PACKS.map(([t, d, pr]) => `<div class="pack"><div><div class="bk-title" style="font-size:.95rem">${t}</div><div class="bk-meta">${d}</div></div>
+            <div class="pay-amt"><div class="g-price">${pr}</div><span class="tag">Coming soon</span></div></div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }
+
   async function learnerView() {
     const [bookings, lp, ct] = await Promise.all([
       loadBookings('learner_id'),
@@ -167,9 +285,9 @@
     const bookingCard = b => `
       <div class="bk">
         <div class="bk-top">
-          <div><div class="bk-title">${esc(b.service_title)}</div>
+          <div class="who-head sm">${NR.avatar(b.guide_name, b.guide_avatar, 40)}<div><div class="bk-title">${esc(b.service_title)}</div>
             <div class="bk-meta">with ${esc(b.guide_name)}${b.guide_headline ? ' · ' + esc(b.guide_headline) : ''}</div>
-            <div class="bk-meta">${NR.when(b.scheduled_at)} · ${b.duration_min} min · ${NR.inr(b.price_inr)}</div></div>
+            <div class="bk-meta">${NR.when(b.scheduled_at)} · ${b.duration_min} min · ${NR.inr(b.price_inr)}</div></div></div>
           ${status(b.status)}
         </div>
         ${b.status === 'accepted' && NR.safeUrl(b.meeting_link) ? `<div>Meeting link: <a class="meet" href="${esc(NR.safeUrl(b.meeting_link))}" target="_blank" rel="noopener">${esc(b.meeting_link)}</a></div>` : ''}
@@ -188,12 +306,9 @@
       </div>`;
 
     root.innerHTML = `
-      <div class="page-head">
-        <div><div class="meta">${esc([info.career_stage, info.field].filter(Boolean).join(' · ') || 'Learner')}</div>
-          <h1 style="font-size:clamp(1.8rem,4vw,2.4rem)">${greeting()}, ${esc(firstName())}</h1></div>
-        <a class="btn" href="guides.html${info.field ? '?field=' + encodeURIComponent(info.field) : ''}">Book a session</a>
-      </div>
-      ${tabs([{ id: 'sessions', label: 'Sessions', badge: upcoming.length }, { id: 'scorecards', label: 'Scorecards', badge: cards.length }, { id: 'profile', label: 'Profile' }], tab)}
+      ${whoHead(esc([info.career_stage, info.field].filter(Boolean).join(' · ') || 'Learner'),
+        `<a class="btn" href="guides.html${info.field ? '?field=' + encodeURIComponent(info.field) : ''}">Book a session</a>`)}
+      ${tabs([{ id: 'sessions', label: 'Sessions', badge: upcoming.length }, { id: 'scorecards', label: 'Scorecards', badge: cards.length }, { id: 'profile', label: 'Profile' }, { id: 'plan', label: 'Plan & payments' }], tab)}
       <div data-panel="sessions" ${tab !== 'sessions' ? 'hidden' : ''}>
         <div class="grid-main">
           <div class="stack">
@@ -212,8 +327,9 @@
           || '<div class="empty" style="grid-column:1/-1">Scorecards from your guides will appear here after each session.</div>'}</div>
       </div>
       <div data-panel="profile" ${tab !== 'profile' ? 'hidden' : ''}>
-        <form class="join" id="learner-profile" novalidate style="max-width:640px">
-          <h3>Your profile</h3>
+        <div class="grid-main">
+        <form class="join" id="learner-profile" novalidate>
+          <h3>Basic details</h3>
           <div class="row2">
             <div class="field"><label for="p-name">Full name</label><input id="p-name" value="${esc(profile.full_name)}" maxlength="120"></div>
             <div class="field"><label for="p-phone">Phone (optional)</label><input id="p-phone" type="tel" value="${esc((ct.data || {}).phone || '')}" maxlength="20"></div>
@@ -223,10 +339,14 @@
             <div class="field"><label for="p-field">Field</label><select id="p-field"><option value="">Choose…</option>${NR.options(NR.FIELDS, info.field)}</select></div>
           </div>
           <div class="field"><label for="p-goal">Main goal</label><input id="p-goal" value="${esc(info.goal || '')}" maxlength="200"></div>
-          <p class="demo-note">Signed in as ${esc(me.email)}. Guides you book can see your name, stage, field and goal.</p>
+          <p class="demo-note">Guides you book can see your name, photo, stage, field and goal.</p>
           <button class="btn" type="submit" style="align-self:flex-start">Save profile</button>
         </form>
-      </div>`;
+        <div class="stack">${photoCard()}${securityCard()}</div>
+        </div>
+      </div>
+      <div data-panel="plan" ${tab !== 'plan' ? 'hidden' : ''}>${learnerPlanHtml(bookings)}</div>`;
+    wireAccount(() => { activeTab = 'profile'; learnerView(); });
 
     const all = byId(bookings, 'id');
     root.onclick = async e => {
@@ -323,8 +443,8 @@
     const card = (b, actions) => `
       <div class="bk">
         <div class="bk-top">
-          <div><div class="bk-title">${esc(b.learner_name)}</div>
-            ${learnerLine(b) ? `<div class="bk-meta">${learnerLine(b)}</div>` : ''}</div>
+          <div class="who-head sm">${NR.avatar(b.learner_name, b.learner_avatar, 40)}<div><div class="bk-title">${esc(b.learner_name)}</div>
+            ${learnerLine(b) ? `<div class="bk-meta">${learnerLine(b)}</div>` : ''}</div></div>
           ${status(b.status)}
         </div>
         ${details([
@@ -338,6 +458,40 @@
         ${b.learner_note ? `<div class="bk-note"><strong>Learner's note</strong>\n${esc(b.learner_note)}</div>` : ''}
         ${actions}
       </div>`;
+
+    function guidePlanHtml() {
+      const done = bookings.filter(b => b.status === 'completed').sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at));
+      const net = x => Math.round(x * (1 - NR.PLATFORM_FEE));
+      const allGross = done.reduce((t, b) => t + b.price_inr, 0);
+      const upi = (ct.data || {}).payout_upi || '';
+      return `<div class="grid-main">
+        <div class="stack">
+          <div class="card">
+            <div class="day-head"><h3>Your plan</h3>${g.is_verified ? '<span class="st st-accepted">Active</span>' : g.is_rejected ? '<span class="st st-declined">Not approved</span>' : '<span class="st st-requested">Under review</span>'}</div>
+            <div><div class="bk-title">Guide · free to join</div><div class="bk-meta">You set your own prices. NextRung keeps ${Math.round(NR.PLATFORM_FEE * 100)}% of each paid session; you keep the rest.</div></div>
+            ${details([['Sessions completed', String(done.length)], ['Earned this month', NR.inr(earnings)], ['Earned in total', NR.inr(net(allGross))]])}
+          </div>
+          <div class="card">
+            <h3>Earnings history</h3>
+            ${done.length ? `<div class="pay-list">${done.map(b => `
+              <div class="pay-row"><div><div class="bk-title" style="font-size:.95rem">${esc(b.service_title)}</div>
+                <div class="bk-meta">${esc(b.learner_name)} · ${NR.when(b.scheduled_at)}</div>
+                <div class="bk-meta">${NR.inr(b.price_inr)} − ${NR.inr(b.price_inr - net(b.price_inr))} fee</div></div>
+                <div class="pay-amt"><div class="g-price">${NR.inr(net(b.price_inr))}</div><span class="muted" style="font-size:.78rem">you receive</span></div></div>`).join('')}</div>`
+            : '<div class="empty">Completed sessions and what you earned from each will appear here.</div>'}
+          </div>
+        </div>
+        <div class="stack">
+          <form class="card" id="upi-form" novalidate>
+            <h3>Payout details</h3>
+            <div class="field"><label for="upi-id">UPI ID</label><input id="upi-id" value="${esc(upi)}" placeholder="name@okicici" autocomplete="off"></div>
+            <p class="demo-note">Private to you and the NextRung team. Used for weekly payouts once online payments launch.</p>
+            <button class="btn ghost" type="submit" style="align-self:flex-start">Save payout details</button>
+          </form>
+          ${paymentOptionsCard(true)}
+        </div>
+      </div>`;
+    }
 
     // Availability: upcoming slots grouped by day, plus a form to add more.
     const TIMES = [];
@@ -375,14 +529,11 @@
         </div>`;
 
     root.innerHTML = `
-      <div class="page-head">
-        <div><div class="meta">${esc(g.headline || 'Guide')}${g.is_verified ? ' · Verified guide' : ''}</div>
-          <h1 style="font-size:clamp(1.8rem,4vw,2.4rem)">${greeting()}, ${esc(firstName())}</h1></div>
+      ${whoHead(esc(g.headline || 'Guide') + (g.is_verified ? ' · <span class="verified">✓ Verified guide</span>' : ''), `
         <div class="view-switch">
           ${profile.role === 'admin' ? '<button class="btn ghost" type="button" data-switch="admin">Back to admin</button>' : ''}
           ${g.is_verified ? `<a class="btn ghost" href="guides.html?id=${encodeURIComponent(me.id)}">View public profile</a>` : ''}
-        </div>
-      </div>
+        </div>`)}
       ${g.is_verified ? '' : g.is_rejected
         ? `<div class="notice bad" style="margin-bottom:18px">Your guide application was not approved this time. If you think this is a mistake or have more experience to share, update your profile and contact us.</div>`
         : `<div class="notice" style="margin-bottom:18px">Your profile is being reviewed. Learners will see you once we've verified your experience, usually within two working days. Meanwhile, complete your profile and services.</div>`}
@@ -397,7 +548,8 @@
         { id: 'availability', label: 'Availability' },
         { id: 'past', label: 'Past' },
         { id: 'services', label: 'Services' },
-        { id: 'profile', label: 'Profile' }], tab)}
+        { id: 'profile', label: 'Profile' },
+        { id: 'plan', label: 'Plan & payouts' }], tab)}
 
       <div data-panel="requests" class="stack" ${tab !== 'requests' ? 'hidden' : ''}>
         ${requests.map(b => card(b, `
@@ -464,7 +616,8 @@
       </div>
 
       <div data-panel="profile" ${tab !== 'profile' ? 'hidden' : ''}>
-        <form class="join" id="guide-profile" novalidate style="max-width:720px">
+        <div class="grid-main">
+        <form class="join" id="guide-profile" novalidate>
           <h3>Public profile</h3>
           <div class="row2">
             <div class="field"><label for="g-name">Full name</label><input id="g-name" value="${esc(profile.full_name)}" maxlength="120"></div>
@@ -480,10 +633,21 @@
             <div class="field"><label for="g-avail">Usual availability</label><select id="g-avail"><option value="">Choose…</option>${NR.options(NR.AVAILABILITY, g.availability)}</select></div>
           </div>
           <div class="field"><label for="g-phone">Phone (private, optional)</label><input id="g-phone" type="tel" value="${esc((ct.data || {}).phone || '')}" maxlength="20"></div>
-          <p class="demo-note">Signed in as ${esc(me.email)}. Your phone and email are never shown publicly.</p>
+          <p class="demo-note">Your phone and email are never shown publicly.</p>
           <button class="btn" type="submit" style="align-self:flex-start">Save profile</button>
         </form>
-      </div>`;
+        <div class="stack">${photoCard()}${securityCard()}</div>
+        </div>
+      </div>
+      <div data-panel="plan" ${tab !== 'plan' ? 'hidden' : ''}>${guidePlanHtml()}</div>`;
+    wireAccount(() => refresh('profile'));
+    const upiForm = document.getElementById('upi-form');
+    if (upiForm) upiForm.onsubmit = async e => {
+      e.preventDefault();
+      const v = document.getElementById('upi-id').value.trim();
+      if (v && !/^[A-Za-z0-9._-]{2,64}@[A-Za-z][A-Za-z0-9]{1,63}$/.test(v)) return NR.toast('Enter a valid UPI ID, like name@okicici.', true);
+      if (await run(sb.from('contacts').update({ payout_upi: v || null }).eq('user_id', me.id), 'Payout details saved.')) refresh('plan');
+    };
 
     const all = byId(bookings, 'id'), svcById = byId(services, 'id');
     const link = id => (document.getElementById('ml-' + id) || {}).value?.trim() || '';
@@ -684,7 +848,7 @@
   async function adminView() {
     const [gps, profs, contacts, bookings, learners] = await Promise.all([
       sb.from('guide_profiles').select('*').order('created_at', { ascending: false }),
-      sb.from('profiles').select('id, full_name, role, created_at'),
+      sb.from('profiles').select('*'),
       sb.from('contacts').select('user_id, email, phone'),
       sb.from('bookings').select('*').order('created_at', { ascending: false }).limit(100),
       sb.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'learner')
@@ -706,9 +870,9 @@
       return `
         <div class="bk">
           <div class="bk-top">
-            <div><div class="bk-title">${esc(p.full_name || 'Unnamed')}${g.headline ? ' · ' + esc(g.headline) : ''}</div>
+            <div class="who-head sm">${NR.avatar(p.full_name, p.avatar_url, 44)}<div><div class="bk-title">${esc(p.full_name || 'Unnamed')}${g.headline ? ' · ' + esc(g.headline) : ''}</div>
               <div class="bk-meta">${esc([g.field, g.years_experience, g.availability].filter(Boolean).join(' · ') || 'Profile incomplete')}</div>
-              <div class="bk-meta">${esc(c.email || '')}${c.phone ? ' · ' + esc(c.phone) : ''} · joined ${NR.when(g.created_at).replace(/,.*$/, '')}</div></div>
+              <div class="bk-meta">${esc(c.email || '')}${c.phone ? ' · ' + esc(c.phone) : ''} · joined ${NR.when(g.created_at).replace(/,.*$/, '')}</div></div></div>
             ${g.is_verified ? '<span class="st st-accepted">verified</span>' : g.is_rejected ? '<span class="st st-declined">rejected</span>' : '<span class="st st-requested">pending</span>'}
           </div>
           ${g.bio ? `<div class="bk-note">${esc(g.bio)}</div>` : ''}
@@ -726,14 +890,18 @@
     };
 
     root.innerHTML = `
-      <div class="page-head"><div><div class="meta">Admin</div><h1 style="font-size:clamp(1.8rem,4vw,2.4rem)">${greeting()}, ${esc(firstName())}</h1></div>
-        ${hasGuideProfile ? '<button class="btn ghost" type="button" data-switch="guide">Open my guide dashboard</button>' : ''}</div>
+      ${whoHead('Admin', hasGuideProfile ? '<button class="btn ghost" type="button" data-switch="guide">Open my guide dashboard</button>' : '')}
       <div class="stats" style="margin-bottom:22px">
         <div class="stat"><div class="n">${learners.count ?? '–'}</div><div class="l">Learners</div></div>
         <div class="stat"><div class="n">${verified.length} <small class="muted" style="font-size:.9rem">/ ${guides.length}</small></div><div class="l">Verified guides / all guides</div></div>
         <div class="stat"><div class="n">${count('requested') + count('accepted')}</div><div class="l">Open bookings (${count('completed')} completed)</div></div>
       </div>
-      ${tabs([{ id: 'pending', label: 'To verify', badge: pending.length }, { id: 'guides', label: 'Verified guides' }, { id: 'rejected', label: 'Rejected' }, { id: 'bookings', label: 'Recent bookings' }], tab)}
+      ${tabs([{ id: 'pending', label: 'To verify', badge: pending.length }, { id: 'guides', label: 'Verified guides' }, { id: 'rejected', label: 'Rejected' }, { id: 'bookings', label: 'Recent bookings' }, { id: 'profile', label: 'My profile' }], tab)}
+      <div data-panel="profile" ${tab !== 'profile' ? 'hidden' : ''}><div class="grid-2">
+        <form class="card" id="admin-name" novalidate><h3>Basic details</h3>
+          <div class="field"><label for="ad-name">Full name</label><input id="ad-name" value="${esc(profile.full_name)}" maxlength="120"></div>
+          <button class="btn" type="submit" style="align-self:flex-start">Save</button></form>
+        <div class="stack">${photoCard()}${securityCard()}</div></div></div>
       <div data-panel="pending" class="stack" ${tab !== 'pending' ? 'hidden' : ''}>${pending.map(guideCard).join('') || '<div class="empty">No guides waiting for verification.</div>'}</div>
       <div data-panel="guides" class="stack" ${tab !== 'guides' ? 'hidden' : ''}>${verified.map(guideCard).join('') || '<div class="empty">No verified guides yet.</div>'}</div>
       <div data-panel="rejected" class="stack" ${tab !== 'rejected' ? 'hidden' : ''}>${rejected.map(guideCard).join('') || '<div class="empty">No rejected applications.</div>'}</div>
@@ -750,6 +918,13 @@
           </div>` : ''}</div>`).join('')
         || '<div class="empty">No bookings yet.</div>'}</div>`;
 
+    wireAccount(() => { activeTab = 'profile'; adminView(); });
+    document.getElementById('admin-name').onsubmit = async e => {
+      e.preventDefault();
+      const name = document.getElementById('ad-name').value.trim();
+      if (!name) return NR.toast('Add your name.', true);
+      if (await run(sb.from('profiles').update({ full_name: name }).eq('id', me.id), 'Saved.')) { profile.full_name = name; activeTab = 'profile'; adminView(); }
+    };
     root.onclick = async e => {
       const t = e.target.closest('[data-tab]');
       if (t) { activeTab = t.dataset.tab; return adminView(); }

@@ -12,7 +12,7 @@
   const me = IDS[ROLE];
   const DB = {
     profiles: [
-      { id: 'g1', role: 'guide', full_name: 'Rahul Deshmukh', created_at: iso(now - 50 * H) },
+      { id: 'g1', role: 'guide', full_name: 'Rahul Deshmukh', created_at: iso(now - 50 * H), avatar_url: null },
       { id: 'g2', role: 'guide', full_name: 'Meera Shah', created_at: iso(now - 20 * H) },
       { id: 'g3', role: 'guide', full_name: 'Karan Rao', created_at: iso(now - 10 * H) },
       { id: 'l1', role: 'learner', full_name: 'Akash Mehta', created_at: iso(now - 30 * H) },
@@ -80,6 +80,11 @@
     createClient() {
       return {
         from: query,
+        storage: { from(bucket) { return {
+          upload: async (path, blob, opts) => { window.__writes.push({ table: 'storage', op: 'upload', payload: { bucket, path, type: blob && blob.type, upsert: opts && opts.upsert }, rows: [] }); return { data: { path }, error: null }; },
+          getPublicUrl: path => ({ data: { publicUrl: `https://example.supabase.co/storage/v1/object/public/${bucket}/${path}` } }),
+          remove: async paths => { window.__writes.push({ table: 'storage', op: 'remove', payload: paths, rows: [] }); return { error: null }; }
+        }; } },
         rpc(fn, args) {
           if (fn === 'open_slots') {
             const taken = DB.bookings.filter(b => ['requested', 'accepted', 'completed'].includes(b.status)).map(b => b.slot_id);
@@ -93,7 +98,9 @@
           onAuthStateChange() { return { data: { subscription: { unsubscribe() {} } } }; },
           signUp: async (x) => { window.__writes.push({ table: 'auth', op: 'signUp', payload: x }); return { data: { user: { identities: [{}] }, session: null }, error: null }; },
           signInWithPassword: async () => ({ error: null }), signOut: async () => ({}),
-          resetPasswordForEmail: async () => ({ error: null }), updateUser: async () => ({ error: null })
+          updateUserRecorded: true,
+          resetPasswordForEmail: async () => ({ error: null }),
+          updateUser: async (x) => { window.__writes.push({ table: 'auth', op: 'updateUser', payload: x, rows: [] }); return { error: null }; }
         }
       };
     }
