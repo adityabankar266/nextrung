@@ -92,3 +92,27 @@ dialog.modal::backdrop{background:rgba(10,20,16,.55)}
 .nav-cta .btn{white-space:nowrap}
 .hidden-sm{display:inline}
 @media (max-width:460px){.hidden-sm{display:none}}
+
+/* labelled booking details */
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:0;font-size:.92rem;background:var(--paper);border-radius:8px;padding:12px 14px}
+.kv dt{color:var(--muted);font-size:.84rem;white-space:nowrap}
+.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+
+/* service choice as radio cards */
+.svc-choice{display:flex;flex-direction:column;gap:8px}
+.svc-choice label{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;background:var(--paper);font-weight:400}
+.svc-choice label:has(input:checked){border-color:var(--mark);background:var(--mark-soft)}
+.svc-choice input{width:18px;height:18px;margin:0;accent-color:var(--mark)}
+.svc-choice .t{font-weight:600}
+.svc-choice .d{font-size:.84rem;color:var(--muted)}
+.svc-choice .p{font-family:var(--mono);font-size:.88rem;white-space:nowrap}
+.field .req{color:var(--warn)}
+
+dialog.modal:focus,dialog.modal:focus-visible{outline:none}
+/* keep the three dashboard numbers on one row on phones */
+@media (max-width:520px){
+  .page .stats{grid-template-columns:repeat(3,1fr);gap:8px}
+  .page .stat{padding:10px 12px}
+  .page .stat .n{font-size:1.15rem}
+  .page .stat .l{font-size:.72rem;line-height:1.35}
+}

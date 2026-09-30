@@ -96,6 +96,23 @@ def main():
     ok, out, _ = as_user(None, "select full_name||'|'||from_price from public.guide_directory;")
     expect("verified guide shows in public directory", out == "Rahul Deshmukh|1200", out)
 
+    # --- rejection -------------------------------------------------------------
+    print("rejection")
+    as_user(guide2, f"update public.guide_profiles set is_rejected=true where user_id='{guide2}';")
+    as_user(guide, f"update public.guide_profiles set is_rejected=true where user_id='{guide}';")
+    r = psql(f"select is_rejected from public.guide_profiles where user_id='{guide}';").stdout.strip()
+    expect("guide cannot change their own rejection flag", r == "f", r)
+    ok, _, err = as_user(admin, f"update public.guide_profiles set is_rejected=true where user_id='{guide2}';")
+    r = psql(f"select is_rejected from public.guide_profiles where user_id='{guide2}';").stdout.strip()
+    expect("admin can reject a guide", ok and r == "t", err or r)
+    as_user(guide2, f"update public.guide_profiles set bio='please', is_rejected=false where user_id='{guide2}';")
+    r = psql(f"select is_rejected||'|'||bio from public.guide_profiles where user_id='{guide2}';").stdout.strip()
+    expect("rejected guide can edit profile but not clear rejection", r == "true|please", r)
+    as_user(admin, f"update public.guide_profiles set is_verified=true where user_id='{guide2}';")
+    r = psql(f"select is_verified||'|'||is_rejected from public.guide_profiles where user_id='{guide2}';").stdout.strip()
+    expect("verifying a rejected guide clears the rejection", r == "true|false", r)
+    as_user(admin, f"update public.guide_profiles set is_verified=false where user_id='{guide2}';")
+
     # --- privacy ---------------------------------------------------------------
     print("privacy")
     ok, out, _ = as_user(None, "select count(*) from public.contacts;")

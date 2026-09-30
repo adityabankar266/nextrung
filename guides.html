@@ -119,8 +119,13 @@
       bookHtml = `
         <form class="stack" id="book-form" novalidate>
           <h3>Request a session</h3>
-          <div class="field"><label for="bk-svc">Service</label>
-            <select id="bk-svc">${services.map(s => `<option value="${esc(s.id)}">${esc(s.title)} · ${s.duration_min} min · ${NR.inr(s.price_inr)}</option>`).join('')}</select></div>
+          <fieldset class="field" style="border:0;margin:0;padding:0">
+            <legend>Choose a service</legend>
+            <div class="svc-choice">${services.map((s, i) => `
+              <label><input type="radio" name="bk-svc" value="${esc(s.id)}"${services.length === 1 ? ' checked' : ''}>
+                <span><span class="t">${esc(s.title)}</span><br><span class="d">${s.duration_min} min${s.description ? ' · ' + esc(s.description) : ''}</span></span>
+                <span class="p">${NR.inr(s.price_inr)}</span></label>`).join('')}</div>
+          </fieldset>
           <div class="slot-row">
             <div class="field"><label for="bk-date">Date</label><input id="bk-date" type="date" min="${today}" value="${today}"></div>
             <div class="field"><label for="bk-time">Time (IST)</label><input id="bk-time" type="time" value="18:30" step="900"></div>
@@ -142,11 +147,11 @@
         <div class="g-tags">${[g.field, g.years_experience, g.availability].filter(Boolean).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
         ${g.bio ? `<p class="bio">${esc(g.bio)}</p>` : ''}
         ${li ? `<a class="meet" href="${esc(li)}" target="_blank" rel="noopener">LinkedIn profile ↗</a>` : ''}
-        <div>
+        ${bookHtml.includes('id="book-form"') ? '' : `<div>
           <span class="w-h">Services</span>
           <div class="svc-list">${services.map(s => `
             <div class="svc-row"><div><div class="t">${esc(s.title)}</div><div class="d">${s.duration_min} min${s.description ? ' · ' + esc(s.description) : ''}</div></div><span class="g-price">${NR.inr(s.price_inr)}</span><span></span></div>`).join('') || '<p class="muted">None listed yet.</p>'}</div>
-        </div>
+        </div>`}
         ${reviews.length ? `<div><span class="w-h">Recent reviews</span>${reviews.map(r => `
           <div class="li"><div><div class="rating">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>${r.comment ? `<div class="sub">${esc(r.comment)}</div>` : ''}</div></div>`).join('')}</div>` : ''}
         ${bookHtml}
@@ -159,6 +164,8 @@
   async function submitBooking(e, guideId) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type=submit]');
+    const picked = document.querySelector('input[name="bk-svc"]:checked');
+    if (!picked) { NR.toast('Choose a service first.', true); return; }
     const date = document.getElementById('bk-date').value;
     const time = document.getElementById('bk-time').value;
     if (!date || !time) { NR.toast('Choose a date and time.', true); return; }
@@ -170,7 +177,7 @@
     const { error } = await NR.sb.from('bookings').insert({
       learner_id: me.id,
       guide_id: guideId,
-      service_id: document.getElementById('bk-svc').value,
+      service_id: picked.value,
       scheduled_at: scheduled.toISOString(),
       learner_note: document.getElementById('bk-note').value.trim()
     });

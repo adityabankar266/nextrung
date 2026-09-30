@@ -15,7 +15,7 @@ NextRung is a two-sided career platform. Learners, from final-year students to e
 | Booking | Learners request a service at a date and time (IST); prices are locked at booking time |
 | Learner dashboard | Upcoming and past sessions, meeting links, cancel, scorecards, star ratings, profile |
 | Guide dashboard | Requests to accept or decline, meeting links, mark completed, write scorecards, manage services, earnings this month after the platform fee, profile |
-| Admin dashboard | Verify or un-verify guides, see counts and recent bookings |
+| Admin dashboard | Accept or reject guide applications (with confirmation), see counts and recent bookings |
 
 Not included yet: online payments, built-in video calls, email notifications for bookings. Guides paste a Google Meet or Zoom link for now.
 
@@ -50,6 +50,22 @@ supabase/         schema.sql, reset.sql, tests/
    where id = (select id from auth.users where email = 'you@example.com');
    ```
 6. **Verify guides:** sign in → Dashboard → To verify → Verify guide. Only verified guides appear in the directory.
+
+## Database updates
+
+When the schema changes after launch, the change ships as a numbered file in `supabase/migrations/`. Run each new file once in the Supabase SQL Editor. New projects only need `schema.sql`, which already includes every update.
+
+| File | What it adds |
+|---|---|
+| `002_guide_rejection.sql` | Admins can reject guide applications |
+
+## Testing
+
+Browser checks (uses a stand-in for Supabase, needs Playwright):
+
+```bash
+python3 tests/ui_check.py
+```
 
 ## Testing the database
 

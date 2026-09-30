@@ -40,7 +40,20 @@
   // ---------- small helpers ----------
   const byId = (list, key) => Object.fromEntries((list || []).map(r => [r[key], r]));
   const isUpcoming = b => ['requested', 'accepted'].includes(b.status) && new Date(b.scheduled_at).getTime() > Date.now() - 3 * 3600e3;
-  const status = s => `<span class="st st-${esc(s)}">${esc(s)}</span>`;
+  const STATUS_LABEL = { requested: 'new request', declined: 'rejected' };
+  const status = s => `<span class="st st-${esc(s)}">${esc(STATUS_LABEL[s] || s)}</span>`;
+  // Booking details as labelled rows, so the chosen service and time are easy to scan.
+  const details = rows => `<dl class="kv">${rows.filter(r => r[1]).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join('')}</dl>`;
+  // Placeholder until the Zoom integration is built.
+  function startSession(b, who) {
+    const link = NR.safeUrl(b.meeting_link);
+    openModal(`
+      <div class="modal-head"><h3>Start session</h3><button class="x" data-close aria-label="Close">×</button></div>
+      <p><strong>${esc(b.service_title)}</strong> with ${esc(who)}<br><span class="muted">${NR.when(b.scheduled_at)} · ${b.duration_min} min</span></p>
+      <div class="notice">Built-in video sessions are coming soon. This button will open the Zoom call directly.</div>
+      ${link ? `<a class="btn" href="${esc(link)}" target="_blank" rel="noopener">Open meeting link for now</a>` : '<p class="muted">No meeting link has been added for this session yet.</p>'}
+      <button class="btn ghost" type="button" data-close>Close</button>`);
+  }
   function openModal(html) { modalBody.innerHTML = html; if (!modal.open) modal.showModal(); }
   function closeModal() { if (modal.open) modal.close(); }
   modal.addEventListener('click', e => { if (e.target === modal || e.target.closest('[data-close]')) closeModal(); });
@@ -130,6 +143,7 @@
         ${b.status === 'requested' ? '<div class="bk-meta">Waiting for the guide to confirm.</div>' : ''}
         ${b.guide_note ? `<div class="bk-note"><strong>Note from guide</strong>\n${esc(b.guide_note)}</div>` : ''}
         <div class="bk-actions">
+          ${b.status === 'accepted' ? `<button class="btn xs" type="button" data-act="start" data-id="${b.id}">▶ Start session</button>` : ''}
           ${b.scorecard ? `<button class="btn xs" type="button" data-act="view-card" data-id="${b.id}">View scorecard</button>` : ''}
           ${b.status === 'completed' && !b.review ? `<button class="btn xs" type="button" data-act="review" data-id="${b.id}">Rate this session</button>` : ''}
           ${b.review ? `<span class="rating">You rated ${'★'.repeat(b.review.rating)}</span>` : ''}
@@ -190,6 +204,7 @@
         if (await run(sb.from('bookings').update({ status: 'cancelled' }).eq('id', b.id), 'Session cancelled.')) learnerView();
       });
       if (a.dataset.act === 'review') reviewBox(b);
+      if (a.dataset.act === 'start') startSession(b, b.guide_name);
     };
     document.getElementById('learner-profile').onsubmit = async e => {
       e.preventDefault();
@@ -267,12 +282,18 @@
     const card = (b, actions) => `
       <div class="bk">
         <div class="bk-top">
-          <div><div class="bk-title">${esc(b.learner_name)} · ${esc(b.service_title)}</div>
-            ${learnerLine(b) ? `<div class="bk-meta">${learnerLine(b)}</div>` : ''}
-            <div class="bk-meta">${NR.when(b.scheduled_at)} · ${b.duration_min} min · ${NR.inr(b.price_inr)}</div></div>
+          <div><div class="bk-title">${esc(b.learner_name)}</div>
+            ${learnerLine(b) ? `<div class="bk-meta">${learnerLine(b)}</div>` : ''}</div>
           ${status(b.status)}
         </div>
-        ${b.learner_note ? `<div class="bk-note">${esc(b.learner_note)}</div>` : ''}
+        ${details([
+          ['Service', esc(b.service_title)],
+          ['Date & time', NR.when(b.scheduled_at)],
+          ['Duration', b.duration_min + ' min'],
+          ['Price', NR.inr(b.price_inr) + ` <span class="muted">(you receive ${NR.inr(Math.round(b.price_inr * (1 - NR.PLATFORM_FEE)))})</span>`],
+          ['Requested on', NR.when(b.created_at)]
+        ])}
+        ${b.learner_note ? `<div class="bk-note"><strong>Learner's note</strong>\n${esc(b.learner_note)}</div>` : ''}
         ${actions}
       </div>`;
 
@@ -282,7 +303,9 @@
           <h1 style="font-size:clamp(1.8rem,4vw,2.4rem)">${greeting()}, ${esc(firstName())}</h1></div>
         ${g.is_verified ? `<a class="btn ghost" href="guides.html?id=${encodeURIComponent(me.id)}">View public profile</a>` : ''}
       </div>
-      ${g.is_verified ? '' : `<div class="notice" style="margin-bottom:18px">Your profile is being reviewed. Learners will see you once we've verified your experience, usually within two working days. Meanwhile, complete your profile and services.</div>`}
+      ${g.is_verified ? '' : g.is_rejected
+        ? `<div class="notice bad" style="margin-bottom:18px">Your guide application was not approved this time. If you think this is a mistake or have more experience to share, update your profile and contact us.</div>`
+        : `<div class="notice" style="margin-bottom:18px">Your profile is being reviewed. Learners will see you once we've verified your experience, usually within two working days. Meanwhile, complete your profile and services.</div>`}
       <div class="stats" style="margin-bottom:22px">
         <div class="stat"><div class="n">${thisMonth.length}</div><div class="l">Sessions completed this month</div></div>
         <div class="stat"><div class="n">${avg}</div><div class="l">Average rating (${ratings.length} review${ratings.length === 1 ? '' : 's'})</div></div>
@@ -300,7 +323,7 @@
           <div class="bk-actions">
             <input type="url" placeholder="Meeting link (https://meet.google.com/…)" id="ml-${b.id}" aria-label="Meeting link">
             <button class="btn xs" type="button" data-act="accept" data-id="${b.id}">Accept</button>
-            <button class="btn ghost xs" type="button" data-act="decline" data-id="${b.id}">Decline</button>
+            <button class="btn ghost xs" type="button" data-act="decline" data-id="${b.id}">Reject</button>
           </div>`)).join('') || '<div class="empty">No new requests right now.</div>'}
       </div>
 
@@ -311,7 +334,8 @@
             <button class="btn ghost xs" type="button" data-act="save-link" data-id="${b.id}">Save link</button>
           </div>
           <div class="bk-actions">
-            <button class="btn xs" type="button" data-act="scorecard" data-id="${b.id}">${b.scorecard ? 'Edit scorecard' : 'Write scorecard'}</button>
+            <button class="btn xs" type="button" data-act="start" data-id="${b.id}">▶ Start session</button>
+            <button class="btn ghost xs" type="button" data-act="scorecard" data-id="${b.id}">${b.scorecard ? 'Edit scorecard' : 'Write scorecard'}</button>
             ${new Date(b.scheduled_at) <= new Date() ? `<button class="btn xs" type="button" data-act="complete" data-id="${b.id}">Mark completed</button>` : ''}
             <button class="btn ghost xs" type="button" data-act="guide-cancel" data-id="${b.id}">Cancel</button>
           </div>`)).join('') || '<div class="empty">No accepted sessions yet.</div>'}
@@ -394,10 +418,11 @@
           break;
         }
         case 'decline':
-          confirmBox('Decline this request?', `${esc(b.learner_name)} · ${NR.when(b.scheduled_at)}`, 'Decline', async () => {
-            if (await run(sb.from('bookings').update({ status: 'declined' }).eq('id', id), 'Request declined.')) refresh('requests');
+          confirmBox('Reject this request?', `${esc(b.service_title)} for ${esc(b.learner_name)} on ${NR.when(b.scheduled_at)}. The learner will see it as rejected, and this can't be undone.`, 'Yes, reject', async () => {
+            if (await run(sb.from('bookings').update({ status: 'declined' }).eq('id', id), 'Request rejected.')) refresh('requests');
           });
           break;
+        case 'start': startSession(b, b.learner_name); break;
         case 'save-link': {
           const ml = link(id);
           if (ml && !NR.safeUrl(ml)) return NR.toast('The meeting link must start with https://', true);
@@ -539,8 +564,9 @@
     if (err) throw err.error;
     const P = byId(profs.data, 'id'), C = byId(contacts.data, 'user_id');
     const guides = gps.data || [];
-    const pending = guides.filter(g => !g.is_verified);
+    const pending = guides.filter(g => !g.is_verified && !g.is_rejected);
     const verified = guides.filter(g => g.is_verified);
+    const rejected = guides.filter(g => !g.is_verified && g.is_rejected);
     const bk = bookings.data || [];
     const tab = activeTab || (pending.length ? 'pending' : 'guides');
     const count = s => bk.filter(b => b.status === s).length;
@@ -554,12 +580,18 @@
             <div><div class="bk-title">${esc(p.full_name || 'Unnamed')}${g.headline ? ' · ' + esc(g.headline) : ''}</div>
               <div class="bk-meta">${esc([g.field, g.years_experience, g.availability].filter(Boolean).join(' · ') || 'Profile incomplete')}</div>
               <div class="bk-meta">${esc(c.email || '')}${c.phone ? ' · ' + esc(c.phone) : ''} · joined ${NR.when(g.created_at).replace(/,.*$/, '')}</div></div>
-            ${g.is_verified ? '<span class="st st-accepted">verified</span>' : '<span class="st st-requested">pending</span>'}
+            ${g.is_verified ? '<span class="st st-accepted">verified</span>' : g.is_rejected ? '<span class="st st-declined">rejected</span>' : '<span class="st st-requested">pending</span>'}
           </div>
           ${g.bio ? `<div class="bk-note">${esc(g.bio)}</div>` : ''}
           <div class="bk-actions">
             ${li ? `<a class="btn ghost xs" href="${esc(li)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : '<span class="bk-meta">No LinkedIn link</span>'}
-            <button class="btn xs" type="button" data-act="${g.is_verified ? 'unverify' : 'verify'}" data-id="${g.user_id}">${g.is_verified ? 'Remove verification' : 'Verify guide'}</button>
+            ${g.is_verified
+              ? `<button class="btn ghost xs" type="button" data-act="unverify" data-id="${g.user_id}">Remove verification</button>`
+              : g.is_rejected
+                ? `<button class="btn xs" type="button" data-act="verify" data-id="${g.user_id}">Verify anyway</button>
+                   <button class="btn ghost xs" type="button" data-act="unreject" data-id="${g.user_id}">Move back to review</button>`
+                : `<button class="btn xs" type="button" data-act="verify" data-id="${g.user_id}">Accept</button>
+                   <button class="btn ghost xs" type="button" data-act="reject" data-id="${g.user_id}">Reject</button>`}
           </div>
         </div>`;
     };
@@ -571,9 +603,10 @@
         <div class="stat"><div class="n">${verified.length} <small class="muted" style="font-size:.9rem">/ ${guides.length}</small></div><div class="l">Verified guides / all guides</div></div>
         <div class="stat"><div class="n">${count('requested') + count('accepted')}</div><div class="l">Open bookings (${count('completed')} completed)</div></div>
       </div>
-      ${tabs([{ id: 'pending', label: 'To verify', badge: pending.length }, { id: 'guides', label: 'Verified guides' }, { id: 'bookings', label: 'Recent bookings' }], tab)}
+      ${tabs([{ id: 'pending', label: 'To verify', badge: pending.length }, { id: 'guides', label: 'Verified guides' }, { id: 'rejected', label: 'Rejected' }, { id: 'bookings', label: 'Recent bookings' }], tab)}
       <div data-panel="pending" class="stack" ${tab !== 'pending' ? 'hidden' : ''}>${pending.map(guideCard).join('') || '<div class="empty">No guides waiting for verification.</div>'}</div>
       <div data-panel="guides" class="stack" ${tab !== 'guides' ? 'hidden' : ''}>${verified.map(guideCard).join('') || '<div class="empty">No verified guides yet.</div>'}</div>
+      <div data-panel="rejected" class="stack" ${tab !== 'rejected' ? 'hidden' : ''}>${rejected.map(guideCard).join('') || '<div class="empty">No rejected applications.</div>'}</div>
       <div data-panel="bookings" class="stack" ${tab !== 'bookings' ? 'hidden' : ''}>${bk.map(b => `
         <div class="bk"><div class="bk-top"><div>
           <div class="bk-title">${esc((P[b.learner_id] || {}).full_name || 'Learner')} → ${esc((P[b.guide_id] || {}).full_name || 'Guide')}</div>
@@ -585,8 +618,24 @@
       if (t) { activeTab = t.dataset.tab; return adminView(); }
       const a = e.target.closest('[data-act]');
       if (!a) return;
-      const verify = a.dataset.act === 'verify';
-      if (await run(sb.from('guide_profiles').update({ is_verified: verify }).eq('user_id', a.dataset.id), verify ? 'Guide verified. They now appear in the directory.' : 'Verification removed.')) adminView();
+      const id = a.dataset.id;
+      const g = guides.find(x => x.user_id === id) || {};
+      const who = esc((P[id] || {}).full_name || 'this guide');
+      const save = async (changes, msg) => {
+        if (await run(sb.from('guide_profiles').update(changes).eq('user_id', id), msg)) adminView();
+      };
+      switch (a.dataset.act) {
+        case 'verify':
+          return save({ is_verified: true, is_rejected: false }, 'Guide accepted. They now appear in the directory.');
+        case 'reject':
+          return confirmBox('Reject this application?', `${who} will not appear in the directory and will see that their application was not approved. You can reverse this later from the Rejected tab.`, 'Yes, reject', () =>
+            save({ is_verified: false, is_rejected: true }, 'Application rejected.'));
+        case 'unverify':
+          return confirmBox('Remove verification?', `${who} will be hidden from the directory. Their existing bookings stay as they are.`, 'Remove verification', () =>
+            save({ is_verified: false }, 'Verification removed.'));
+        case 'unreject':
+          return save({ is_rejected: false }, 'Moved back to review.');
+      }
     };
   }
 

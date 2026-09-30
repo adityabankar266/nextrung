@@ -1,0 +1,141 @@
+"""Browser checks for the NextRung pages using a stand-in for Supabase (tests/mock-supabase.js).
+
+Run: PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers python3 tests/ui_check.py
+"""
+import functools, http.server, os, socketserver, sys, threading
+from playwright.sync_api import sync_playwright
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MOCK = open(os.path.join(ROOT, "tests", "mock-supabase.js")).read()
+SHOTS = os.environ.get("SHOTS", "/tmp")
+PORT = int(os.environ.get("PORT", "8765"))
+results = []
+
+
+def check(name, cond, detail=""):
+    results.append(cond)
+    print(("  ok   " if cond else "  FAIL ") + name + ("" if cond else f"  {detail}"))
+
+
+def serve():
+    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=ROOT)
+    handler.log_message = lambda *a: None
+    socketserver.TCPServer.allow_reuse_address = True
+    httpd = socketserver.TCPServer(("127.0.0.1", PORT), handler)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    return httpd
+
+
+def page_for(browser, role, errors):
+    ctx = browser.new_context(viewport={"width": 390, "height": 900}, device_scale_factor=1)
+    ctx.add_init_script(f"localStorage.setItem('mockRole', '{role}');")
+    ctx.route("**/supabase.js", lambda r: r.fulfill(status=200, content_type="text/javascript", body=MOCK))
+    ctx.route("https://fonts.googleapis.com/**", lambda r: r.abort())
+    ctx.route("https://fonts.gstatic.com/**", lambda r: r.abort())
+    p = ctx.new_page()
+    p.on("pageerror", lambda e: errors.append(f"{role}: {e}"))
+    p.on("console", lambda m: errors.append(f"{role} console: {m.text}") if m.type == "error" else None)
+    return p
+
+
+def writes(p):
+    return p.evaluate("window.__writes")
+
+
+def main():
+    httpd = serve()
+    base = f"http://127.0.0.1:{PORT}"
+    errors = []
+    with sync_playwright() as pw:
+        b = pw.chromium.launch()
+
+        print("admin")
+        p = page_for(b, "admin", errors)
+        p.goto(base + "/dashboard.html"); p.wait_for_selector("text=To verify")
+        p.screenshot(path=f"{SHOTS}/admin.png", full_page=True)
+        check("pending guide shows Accept and Reject", p.locator("[data-panel=pending] >> text=Accept").count() == 1 and p.locator("[data-panel=pending] >> text=Reject").count() == 1)
+        p.click("[data-panel=pending] [data-act=reject]")
+        check("reject asks for confirmation", p.locator("#modal >> text=Reject this application?").is_visible())
+        check("nothing saved before confirming", len(writes(p)) == 0)
+        p.click("#cf-yes"); p.wait_for_timeout(300)
+        w = writes(p)
+        check("confirming rejects the guide", w and w[-1]["payload"] == {"is_verified": False, "is_rejected": True} and w[-1]["rows"] == ["g2"], w)
+        p.click("[data-tab=rejected]"); p.wait_for_timeout(200)
+        check("rejected tab lists rejected guide", p.locator("[data-panel=rejected] >> text=Karan Rao").is_visible())
+        p.screenshot(path=f"{SHOTS}/admin-rejected.png", full_page=True)
+
+        print("guide")
+        p = page_for(b, "guide", errors)
+        p.goto(base + "/dashboard.html"); p.wait_for_selector("text=Requests")
+        p.screenshot(path=f"{SHOTS}/guide-requests.png", full_page=True)
+        panel = p.locator("[data-panel=requests]")
+        check("request shows chosen service", panel.locator("dd >> text=Mock panel with scorecard").is_visible())
+        check("request shows date and time", panel.locator("dt >> text=Date & time").is_visible())
+        check("request has Reject button", panel.locator("[data-act=decline] >> text=Reject").is_visible())
+        p.click("[data-panel=requests] [data-act=decline]")
+        check("reject request asks for confirmation", p.locator("#modal >> text=Reject this request?").is_visible())
+        p.click("#modal [data-close] >> nth=1"); p.wait_for_timeout(200)
+        check("Keep it cancels without saving", len(writes(p)) == 0 and not p.locator("#modal").is_visible())
+        p.click("[data-panel=requests] [data-act=decline]"); p.click("#cf-yes"); p.wait_for_timeout(300)
+        w = writes(p)
+        check("confirming rejects the request", w and w[-1]["payload"] == {"status": "declined"} and w[-1]["rows"] == ["b1"], w)
+        p.click("[data-tab=upcoming]"); p.wait_for_timeout(200)
+        p.click("[data-panel=upcoming] [data-act=start]")
+        check("Start session opens placeholder", p.locator("#modal >> text=coming soon").is_visible())
+        p.screenshot(path=f"{SHOTS}/guide-start.png")
+
+        print("learner")
+        p = page_for(b, "learner", errors)
+        p.goto(base + "/dashboard.html"); p.wait_for_selector("text=Sessions")
+        check("learner sees Start session on accepted booking", p.locator("[data-act=start]").count() == 1)
+        p.goto(base + "/guides.html?id=g1"); p.wait_for_selector("#book-form")
+        radios = p.locator("input[name=bk-svc]")
+        check("services shown as radio buttons", radios.count() == 2)
+        p.screenshot(path=f"{SHOTS}/book.png", full_page=True)
+        p.click("#book-form button[type=submit]"); p.wait_for_timeout(200)
+        check("must choose a service", p.locator(".toast >> text=Choose a service first.").is_visible())
+        p.click("text=Career roadmap session")
+        d = p.evaluate("new Date(Date.now()+5*864e5).toISOString().slice(0,10)")
+        p.fill("#bk-date", d)
+        p.click("#book-form button[type=submit]"); p.wait_for_timeout(300)
+        w = writes(p)
+        check("booking uses the chosen service", w and w[-1]["op"] == "insert" and w[-1]["payload"]["service_id"] == "s2", w)
+
+        print("sign-up")
+        p = page_for(b, "learner", errors)
+        p.add_init_script("localStorage.setItem('mockSignedOut','1')")
+        p.goto(base + "/login.html?mode=signup&role=guide"); p.wait_for_selector("#form-signup")
+        p.fill("#su-name", "Test Guide"); p.fill("#su-email", "t@example.com"); p.fill("#su-pass", "longpassword")
+        p.click("#form-signup button[type=submit]")
+        check("guide sign-up blocks missing field", "Choose your field" in p.inner_text("#msg-signup"), p.inner_text("#msg-signup"))
+        p.select_option("#su-field", "Business Analysis"); p.fill("#su-headline", "Senior BA"); p.select_option("#su-exp", "5–10 years")
+        p.fill("#su-li", "linkedin.com/in/test"); p.select_option("#su-avail", "Both")
+        p.click("#form-signup button[type=submit]")
+        check("guide sign-up requires a price", "price" in p.inner_text("#msg-signup"), p.inner_text("#msg-signup"))
+        p.fill("#su-price", "1200"); p.click("#form-signup button[type=submit]"); p.wait_for_timeout(300)
+        w = writes(p)
+        meta = w[-1]["payload"]["options"]["data"] if w else {}
+        check("complete guide sign-up is sent", meta.get("linkedin_url") == "https://linkedin.com/in/test" and meta.get("price_inr") == "1200", meta)
+        p.goto(base + "/login.html?mode=signup"); p.wait_for_selector("#form-signup")
+        p.fill("#su-name", "Test Learner"); p.fill("#su-email", "l@example.com"); p.fill("#su-pass", "longpassword")
+        p.select_option("#su-field", "Marketing"); p.select_option("#su-stage", "Recent graduate")
+        p.click("#form-signup button[type=submit]")
+        check("learner sign-up requires a goal", "goal" in p.inner_text("#msg-signup"), p.inner_text("#msg-signup"))
+        p.screenshot(path=f"{SHOTS}/signup.png", full_page=True)
+
+        overflow = []
+        for path in ["/index.html", "/guides.html", "/dashboard.html", "/login.html"]:
+            q = page_for(b, "guide", errors); q.goto(base + path); q.wait_for_timeout(500)
+            if q.evaluate("document.documentElement.scrollWidth > window.innerWidth + 1"): overflow.append(path)
+        check("no sideways scrolling on phones", not overflow, overflow)
+        b.close()
+
+    real_errors = [e for e in errors if "fonts" not in e and "ERR_FAILED" not in e]
+    check("no script errors", not real_errors, real_errors)
+    httpd.shutdown()
+    print(f"\n{sum(results)} passed, {len(results) - sum(results)} failed")
+    sys.exit(0 if all(results) else 1)
+
+
+if __name__ == "__main__":
+    main()

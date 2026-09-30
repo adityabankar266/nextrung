@@ -40,7 +40,7 @@
 
     <!-- Sign up -->
     <form class="join" id="form-signup" novalidate hidden>
-      <div><span class="eyebrow">Join NextRung</span><h3>Create your account</h3></div>
+      <div><span class="eyebrow">Join NextRung</span><h3>Create your account</h3><p class="demo-note" style="margin-top:6px">All fields are required.</p></div>
       <fieldset class="field" style="border:0;margin:0;padding:0">
         <legend>I want to</legend>
         <div class="role-pick">
@@ -54,20 +54,20 @@
       </div>
       <div class="row2">
         <div class="field"><label for="su-pass">Password</label><input id="su-pass" type="password" autocomplete="new-password" minlength="8" required placeholder="At least 8 characters"></div>
-        <div class="field"><label for="su-field">Field</label><select id="su-field"></select></div>
+        <div class="field"><label for="su-field">Field</label><select id="su-field" required></select></div>
       </div>
 
       <div id="learner-fields" class="stack">
         <div class="row2">
-          <div class="field"><label for="su-stage">Career stage</label><select id="su-stage"></select></div>
+          <div class="field"><label for="su-stage">Career stage</label><select id="su-stage" required></select></div>
           <div class="field"><label for="su-goal">Main goal</label>
-            <select id="su-goal"><option>Crack interviews</option><option>Switch to a new role</option><option>Get promoted or lead a team</option><option>Improve resume and LinkedIn</option><option>Not sure yet, need direction</option></select></div>
+            <select id="su-goal" required><option value="">Select…</option><option>Crack interviews</option><option>Switch to a new role</option><option>Get promoted or lead a team</option><option>Improve resume and LinkedIn</option><option>Not sure yet, need direction</option></select></div>
         </div>
       </div>
 
       <div id="guide-fields" class="stack" hidden>
         <div class="row2">
-          <div class="field"><label for="su-headline">Current role</label><input id="su-headline" placeholder="e.g. Senior Business Analyst"></div>
+          <div class="field"><label for="su-headline">Current role</label><input id="su-headline" maxlength="120" placeholder="e.g. Senior Business Analyst"></div>
           <div class="field"><label for="su-exp">Years of experience</label><select id="su-exp"></select></div>
         </div>
         <div class="row2">
@@ -83,7 +83,7 @@
             <label><input type="checkbox" name="svc" value="Leadership coaching">Leadership coaching</label>
           </div>
         </fieldset>
-        <div class="field"><label for="su-price">Starting price per session (₹)</label><input id="su-price" type="number" min="0" max="100000" step="50" value="999"></div>
+        <div class="field"><label for="su-price">Starting price per session (₹)</label><input id="su-price" type="number" min="0" max="100000" step="50" inputmode="numeric" placeholder="e.g. 999"></div>
         <p class="demo-note">You can change services and prices later. Your profile goes live after a short verification call.</p>
       </div>
 
@@ -122,10 +122,11 @@
   const safeNext = /^[a-z]+\.html(\?.*)?$/i.test(next) ? next : 'dashboard.html';
   const forms = { signin: $('form-signin'), signup: $('form-signup'), forgot: $('form-forgot'), reset: $('form-reset') };
 
-  $('su-field').innerHTML = NR.options(NR.FIELDS, 'Business Analysis');
-  $('su-stage').innerHTML = NR.options(NR.STAGES);
-  $('su-exp').innerHTML = NR.options(NR.EXPERIENCE, '5–10 years');
-  $('su-avail').innerHTML = NR.options(NR.AVAILABILITY, 'Both');
+  const pick = list => '<option value="">Select…</option>' + NR.options(list);
+  $('su-field').innerHTML = pick(NR.FIELDS);
+  $('su-stage').innerHTML = pick(NR.STAGES);
+  $('su-exp').innerHTML = pick(NR.EXPERIENCE);
+  $('su-avail').innerHTML = pick(NR.AVAILABILITY);
 
   if (!NR.ready) $('not-ready').innerHTML = NR.notReadyHtml();
 
@@ -192,19 +193,31 @@
     if (!validEmail(email)) return say('msg-signup', 'Add a valid email address.', true);
     if (password.length < 8) return say('msg-signup', 'Use a password with at least 8 characters.', true);
 
+    if (!$('su-field').value) return say('msg-signup', 'Choose your field.', true);
     const meta = { role, full_name, field: $('su-field').value };
     if (role === 'learner') {
+      if (!$('su-stage').value) return say('msg-signup', 'Choose your career stage.', true);
+      if (!$('su-goal').value) return say('msg-signup', 'Choose your main goal.', true);
       meta.career_stage = $('su-stage').value;
       meta.goal = $('su-goal').value;
     } else {
-      const li = $('su-li').value.trim();
-      if (li && !/^https:\/\//i.test(li)) return say('msg-signup', 'The LinkedIn link should start with https://', true);
+      let li = $('su-li').value.trim();
+      if (li && !/^https?:\/\//i.test(li)) li = 'https://' + li;   // accept "linkedin.com/in/…" as typed
+      li = li.replace(/^http:/i, 'https:');
+      const services = [...document.querySelectorAll('input[name=svc]:checked')].map(c => c.value);
+      const price = $('su-price').value.trim();
+      if (!$('su-headline').value.trim()) return say('msg-signup', 'Add your current role.', true);
+      if (!$('su-exp').value) return say('msg-signup', 'Choose your years of experience.', true);
+      if (!/^https:\/\/([a-z]+\.)?linkedin\.com\/.+/i.test(li)) return say('msg-signup', 'Add your LinkedIn profile link, starting with https://linkedin.com/in/', true);
+      if (!$('su-avail').value) return say('msg-signup', 'Choose your usual availability.', true);
+      if (!services.length) return say('msg-signup', 'Choose at least one service you want to offer.', true);
+      if (!/^\d{1,6}$/.test(price) || +price > 100000) return say('msg-signup', 'Enter your starting price per session in rupees (0 to 1,00,000).', true);
       meta.headline = $('su-headline').value.trim();
       meta.years_experience = $('su-exp').value;
       meta.linkedin_url = li;
       meta.availability = $('su-avail').value;
-      meta.services = [...document.querySelectorAll('input[name=svc]:checked')].map(c => c.value);
-      meta.price_inr = String(Math.max(0, Math.min(100000, parseInt($('su-price').value, 10) || 0)));
+      meta.services = services;
+      meta.price_inr = price;
     }
 
     busy(forms.signup, true);

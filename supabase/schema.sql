@@ -65,6 +65,7 @@ create table public.guide_profiles (
   linkedin_url      text check (linkedin_url is null or char_length(linkedin_url) <= 300),
   availability      text check (availability in ('Weekday evenings','Weekends','Both')),
   is_verified       boolean not null default false,
+  is_rejected       boolean not null default false,  -- admin turned the application down
   created_at        timestamptz not null default now(),
   updated_at        timestamptz not null default now()
 );
@@ -227,13 +228,15 @@ end $$;
 create trigger t_guard_profile before update on public.profiles
   for each row execute function public.guard_profile();
 
--- only admins can verify a guide
+-- only admins can verify or reject a guide
 create or replace function public.guard_guide_profile()
 returns trigger language plpgsql as $$
 begin
-  if new.is_verified is distinct from old.is_verified and not public.is_trusted() then
+  if not public.is_trusted() then
     new.is_verified := old.is_verified;
+    new.is_rejected := old.is_rejected;
   end if;
+  if new.is_verified then new.is_rejected := false; end if;
   new.user_id := old.user_id;
   return new;
 end $$;

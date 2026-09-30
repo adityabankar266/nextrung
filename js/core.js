@@ -63,6 +63,7 @@
     // Turn database and auth errors into sentences people can act on.
     explain(err) {
       const m = (err && (err.message || err.error_description || String(err))) || 'Something went wrong.';
+      if (/is_rejected/.test(m)) return 'The database needs an update first: run supabase/migrations/002_guide_rejection.sql in the Supabase SQL Editor.';
       if (/bookings_no_double_accept/.test(m)) return 'You already have a session accepted at that time. Decline this one or cancel the other first.';
       if (/Invalid login credentials/i.test(m)) return 'Email or password is incorrect.';
       if (/Email not confirmed/i.test(m)) return 'Please confirm your email first. Check your inbox for the link from NextRung.';
