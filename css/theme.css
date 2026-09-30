@@ -94,8 +94,11 @@ header.top .btn.ghost:hover{background:rgba(255,255,255,.1);border-color:#FFFFFF
 .brief p,.brief ul{color:rgba(255,255,255,.85)}
 .brief .eyebrow{color:#93C5FD}
 .brief .timer{color:#93C5FD;border-top-color:rgba(255,255,255,.18)}
-.pro-terms{background:var(--navy)}
+.pro-terms{background:var(--navy);color:#FFFFFF}
 .pro-terms .big{color:#93C5FD}
+.pro-terms .eyebrow{color:#93C5FD}
+.pro-terms p,.pro-terms .ticks li{color:rgba(255,255,255,.85)}
+.pro-terms .ticks li::before{border-color:#93C5FD}
 .pro-terms .btn{background:#FFFFFF!important;border-color:#FFFFFF!important;color:#0B2545!important}
 .plan.feature{border:2px solid var(--accent)}
 .plan.feature .flag{background:var(--accent);color:#FFFFFF;text-transform:none;letter-spacing:0;font-weight:600}
@@ -138,7 +141,7 @@ header.top .btn.ghost:hover{background:rgba(255,255,255,.1);border-color:#FFFFFF
 .resched-note{color:var(--attention)}
 .kv{background:var(--paper)}
 .bk-note{background:var(--paper)}
-.toast{background:var(--navy);border-radius:10px}
+.toast{background:var(--navy);color:#FFFFFF;border-radius:10px}
 .toast.bad{background:#B91C1C}
 .pill.ok{background:var(--success-soft);color:var(--success)}
 .pill.wait{background:var(--attention-soft);color:var(--attention)}
