@@ -98,14 +98,15 @@
     body.innerHTML = '<p class="spinner">Loading…</p>';
     if (!dlg.open) dlg.showModal();
 
-    const [svc, rev] = await Promise.all([
+    const [svc, rev, sl] = await Promise.all([
       NR.sb.from('services').select('id,title,description,duration_min,price_inr').eq('guide_id', id).eq('is_active', true).order('price_inr'),
-      NR.sb.from('reviews').select('rating,comment,created_at').eq('guide_id', id).order('created_at', { ascending: false }).limit(5)
+      NR.sb.from('reviews').select('rating,comment,created_at').eq('guide_id', id).order('created_at', { ascending: false }).limit(5),
+      NR.sb.rpc('open_slots', { p_guide: id })
     ]);
     const services = svc.data || [];
     const reviews = rev.data || [];
+    const slots = sl.data || [];
     const li = NR.safeUrl(g.linkedin_url);
-    const today = new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
 
     let bookHtml;
     if (!services.length) {
@@ -126,14 +127,13 @@
                 <span><span class="t">${esc(s.title)}</span><br><span class="d">${s.duration_min} min${s.description ? ' · ' + esc(s.description) : ''}</span></span>
                 <span class="p">${NR.inr(s.price_inr)}</span></label>`).join('')}</div>
           </fieldset>
-          <div class="slot-row">
-            <div class="field"><label for="bk-date">Date</label><input id="bk-date" type="date" min="${today}" value="${today}"></div>
-            <div class="field"><label for="bk-time">Time (IST)</label><input id="bk-time" type="time" value="18:30" step="900"></div>
+          <div class="field"><span class="field-legend">Choose a time</span>
+            ${sl.error ? `<div class="notice bad">${esc(NR.explain(sl.error))}</div>` : '<div id="bk-slots"></div>'}
           </div>
           <div class="field"><label for="bk-note">What would you like help with?</label>
             <textarea id="bk-note" maxlength="1000" placeholder="e.g. BA interview at a product company next week; I struggle with stakeholder questions."></textarea></div>
-          <button class="btn" type="submit">Send request</button>
-          <p class="demo-note">The guide confirms the time and shares a meeting link. Payment is arranged directly for now.</p>
+          <button class="btn" type="submit"${slots.length ? '' : ' disabled'}>Send request</button>
+          <p class="demo-note">The guide confirms and shares a meeting link. You can reschedule later from your dashboard. Payment is arranged directly for now.</p>
         </form>`;
     }
 
@@ -158,34 +158,35 @@
       </div>`;
 
     const form = document.getElementById('book-form');
-    if (form) form.addEventListener('submit', e => submitBooking(e, id));
+    if (form) {
+      const slotEl = document.getElementById('bk-slots');
+      picker = slotEl ? NR.slotPicker(slotEl, slots, 'This guide has no open time slots right now. Please check back soon.') : null;
+      form.addEventListener('submit', e => submitBooking(e, id));
+    }
   }
+  let picker = null;
 
   async function submitBooking(e, guideId) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type=submit]');
     const picked = document.querySelector('input[name="bk-svc"]:checked');
     if (!picked) { NR.toast('Choose a service first.', true); return; }
-    const date = document.getElementById('bk-date').value;
-    const time = document.getElementById('bk-time').value;
-    if (!date || !time) { NR.toast('Choose a date and time.', true); return; }
-    const scheduled = new Date(`${date}T${time}:00+05:30`);
-    if (isNaN(scheduled) || scheduled.getTime() < Date.now() + 2 * 3600e3) {
-      NR.toast('Choose a time at least 2 hours from now.', true); return;
-    }
+    const slot = picker && picker.slot();
+    if (!slot) { NR.toast('Choose a date and time slot.', true); return; }
     btn.disabled = true;
     const { error } = await NR.sb.from('bookings').insert({
       learner_id: me.id,
       guide_id: guideId,
       service_id: picked.value,
-      scheduled_at: scheduled.toISOString(),
+      slot_id: slot.id,
+      scheduled_at: slot.starts_at,
       learner_note: document.getElementById('bk-note').value.trim()
     });
     btn.disabled = false;
     if (error) { NR.toast(NR.explain(error), true); return; }
     body.innerHTML = `
       <div class="modal-head"><h3>Request sent</h3><button class="x" type="button" aria-label="Close" data-close>×</button></div>
-      <p>Your guide will confirm the time and add a meeting link. You'll see the status in your dashboard.</p>
+      <p>Requested for <strong>${NR.when(slot.starts_at)}</strong>. Your guide will confirm and add a meeting link. You'll see the status in your dashboard.</p>
       <div class="bk-actions"><a class="btn" href="dashboard.html">Go to dashboard</a><button class="btn ghost" type="button" data-close>Keep browsing</button></div>`;
   }
 

@@ -50,13 +50,50 @@
       return /^https:\/\//i.test(u || '') ? u : '';
     },
 
+    // Dates and times are always shown in India time.
+    istDate(ts) { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ts)); },
+    istTime(ts) { return new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit' }).format(new Date(ts)); },
+    istDay(ts) { return new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(ts)); },
+    todayIST() { return NR.istDate(Date.now()); },
+
+    // Pick a date, then one of that day's free times. Returns { value(), slot() }.
+    slotPicker(el, slots, emptyText) {
+      const byDay = {};
+      (slots || []).forEach(s => { (byDay[NR.istDate(s.starts_at)] = byDay[NR.istDate(s.starts_at)] || []).push(s); });
+      const days = Object.keys(byDay).sort();
+      let day = days[0], chosen = null;
+      if (!days.length) {
+        el.innerHTML = `<div class="empty">${NR.esc(emptyText || 'No open time slots right now.')}</div>`;
+        return { value: () => null, slot: () => null };
+      }
+      const render = () => {
+        el.innerHTML = `
+          <div class="chip-label">Date</div>
+          <div class="chip-row" role="group" aria-label="Date">${days.map(d => `
+            <button type="button" class="chip day${d === day ? ' on' : ''}" data-day="${d}" aria-pressed="${d === day}">
+              <b>${NR.esc(NR.istDay(byDay[d][0].starts_at))}</b><small>${byDay[d].length} slot${byDay[d].length === 1 ? '' : 's'}</small></button>`).join('')}</div>
+          <div class="chip-label">Time (IST)</div>
+          <div class="chip-row flowing" role="group" aria-label="Time">${byDay[day].map(s => `
+            <button type="button" class="chip${s.id === chosen ? ' on' : ''}" data-slot="${s.id}" aria-pressed="${s.id === chosen}">${NR.esc(NR.istTime(s.starts_at))}</button>`).join('')}</div>`;
+      };
+      el.onclick = e => {
+        const d = e.target.closest('[data-day]');
+        if (d) { day = d.dataset.day; render(); return; }
+        const t = e.target.closest('[data-slot]');
+        if (t) { chosen = t.dataset.slot; render(); }
+      };
+      render();
+      return { value: () => chosen, slot: () => (slots || []).find(s => s.id === chosen) || null };
+    },
+
     toast(msg, bad) {
       document.querySelectorAll('.toast').forEach(t => t.remove());
       const t = document.createElement('div');
       t.className = 'toast' + (bad ? ' bad' : '');
       t.setAttribute('role', 'status');
       t.textContent = msg;
-      document.body.appendChild(t);
+      // inside an open pop-up, show the message there so it isn't hidden behind it
+      (document.querySelector('dialog[open]') || document.body).appendChild(t);
       setTimeout(() => t.remove(), bad ? 6000 : 3500);
     },
 
@@ -64,6 +101,9 @@
     explain(err) {
       const m = (err && (err.message || err.error_description || String(err))) || 'Something went wrong.';
       if (/is_rejected/.test(m)) return 'The database needs an update first: run supabase/migrations/002_guide_rejection.sql in the Supabase SQL Editor.';
+      if (/open_slots|availability_slots|reschedule_booking|slot_id|could not find the function/i.test(m)) return 'The database needs an update first: run supabase/migrations/003_slots_and_reschedule.sql in the Supabase SQL Editor.';
+      if (/bookings_one_per_slot/.test(m)) return 'That time slot has just been taken. Please choose another.';
+      if (/duplicate key.*availability_slots|availability_slots_guide_id_starts_at_key/.test(m)) return 'You already have a slot at that time.';
       if (/bookings_no_double_accept/.test(m)) return 'You already have a session accepted at that time. Decline this one or cancel the other first.';
       if (/Invalid login credentials/i.test(m)) return 'Email or password is incorrect.';
       if (/Email not confirmed/i.test(m)) return 'Please confirm your email first. Check your inbox for the link from NextRung.';

@@ -116,3 +116,24 @@ dialog.modal:focus,dialog.modal:focus-visible{outline:none}
   .page .stat .n{font-size:1.15rem}
   .page .stat .l{font-size:.72rem;line-height:1.35}
 }
+
+/* date and time chips (booking, reschedule, availability) */
+.chip-label{font-size:.82rem;font-weight:600;margin-top:4px}
+.chip-row{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin}
+.chip-row.flowing{flex-wrap:wrap;overflow:visible}
+.chip{flex:none;display:inline-flex;flex-direction:column;align-items:center;gap:1px;font:500 .88rem var(--body);padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;font-variant-numeric:tabular-nums}
+.chip small{font-size:.7rem;color:var(--muted)}
+.chip.day{min-width:84px}
+.chip.on,.chip[aria-pressed="true"]{border-color:var(--mark);background:var(--mark);color:var(--card)}
+.chip.on small{color:var(--card);opacity:.85}
+.chip.booked{background:var(--accent-soft);border-color:var(--accent-soft);color:var(--accent-ink);cursor:default}
+.chip .del{margin-left:6px;font-weight:700;opacity:.6}
+.chip-inline{flex-direction:row}
+.time-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px}
+.time-grid .chip{padding:7px 4px}
+.day-block{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-bottom:1px dashed var(--line)}
+.day-block:last-child{border-bottom:0}
+.day-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.resched-note{font-size:.82rem;color:var(--accent-ink)}
+.view-switch{display:inline-flex;gap:6px;flex-wrap:wrap}
+.field-legend{font-size:.85rem;font-weight:600}

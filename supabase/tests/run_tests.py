@@ -54,7 +54,10 @@ def main():
     psql(f"create database {DB} encoding 'UTF8' template template0 lc_collate 'C' lc_ctype 'C';", db="postgres")
     psql(open(os.path.join(HERE, "supabase_shim.sql")).read())
     psql(open(os.path.join(ROOT, "schema.sql")).read())
-    print("schema loaded")
+    mig = os.path.join(ROOT, "migrations")
+    for f in sorted(os.listdir(mig)):
+        psql(open(os.path.join(mig, f)).read())
+    print("schema and migrations loaded")
 
     # --- sign-up trigger -------------------------------------------------
     print("sign-up")
@@ -125,24 +128,51 @@ def main():
     expect("visitors cannot see learner profiles", out == "0", out)
 
     # --- bookings -------------------------------------------------------------
+    print("slots")
+    ok, _, _ = as_user(guide, f"insert into public.availability_slots (guide_id, starts_at) values ('{guide}', now() - interval '1 hour');")
+    expect("guide cannot add a slot in the past", not ok)
+    ok, _, _ = as_user(learner, f"insert into public.availability_slots (guide_id, starts_at) values ('{guide}', now() + interval '3 days');")
+    expect("learner cannot add slots for a guide", not ok)
+    def slot(when):
+        ok, out, err = as_user(guide, f"insert into public.availability_slots (guide_id, starts_at) values ('{guide}', {when}) returning id;")
+        return out.splitlines()[0] if ok and out else ""
+    s1 = slot("date_trunc('hour', now()) + interval '3 days'")
+    s2 = slot("date_trunc('hour', now()) + interval '4 days'")
+    s3 = slot("date_trunc('hour', now()) + interval '5 days'")
+    s_soon = slot("now() + interval '30 minutes'")
+    expect("guide can add future slots", all([s1, s2, s3, s_soon]))
+    ok, out, _ = as_user(None, f"select count(*) from public.open_slots('{guide}');")
+    expect("visitors see free slots at least 2 hours ahead", out == "3", out)
+    ok, out, _ = as_user(None, "select count(*) from public.availability_slots;")
+    expect("visitors cannot read the slots table directly", (not ok) or out == "0", out)
+
     print("bookings")
     svc = psql(f"select id from public.services where guide_id='{guide}' order by title limit 1;").stdout.strip()
     when = "now() + interval '3 days'"
-    ok, bid, err = as_user(learner, f"insert into public.bookings (learner_id, guide_id, service_id, scheduled_at, status, price_inr) "
-                                    f"values ('{learner}','{guide}','{svc}', {when}, 'completed', 1) returning id;")
-    expect("learner can request a booking", ok, err)
+    ok, _, err = as_user(learner, f"insert into public.bookings (learner_id, guide_id, service_id, scheduled_at) "
+                                  f"values ('{learner}','{guide}','{svc}', {when});")
+    expect("a booking must use a slot", not ok and "time slots" in err, err)
+    ok, bid, err = as_user(learner, f"insert into public.bookings (learner_id, guide_id, service_id, slot_id, scheduled_at, status, price_inr) "
+                                    f"values ('{learner}','{guide}','{svc}','{s1}', now() + interval '9 days', 'completed', 1) returning id;")
+    expect("learner can request a slot", ok, err)
     bid = bid.splitlines()[0] if bid else ""
-    r = psql(f"select status, price_inr from public.bookings where id='{bid}';").stdout.strip()
-    expect("status and price come from the server, not the form", r == "requested|1200", r)
-    ok, _, err = as_user(learner, f"insert into public.bookings (learner_id, guide_id, service_id, scheduled_at) "
-                                  f"values ('{other}','{guide}','{svc}', {when});")
+    r = psql(f"select status, price_inr, scheduled_at = (select starts_at from public.availability_slots where id='{s1}') from public.bookings where id='{bid}';").stdout.strip()
+    expect("status, price and time come from the server, not the form", r == "requested|1200|t", r)
+    ok, out, _ = as_user(None, f"select count(*) from public.open_slots('{guide}');")
+    expect("a requested slot disappears from free slots", out == "2", out)
+    l2 = signup("kavya@example.com", {"role": "learner", "full_name": "Kavya"})
+    ok, _, err = as_user(l2, f"insert into public.bookings (learner_id, guide_id, service_id, slot_id, scheduled_at) values ('{l2}','{guide}','{svc}','{s1}', now());")
+    expect("nobody else can take a requested slot", not ok, err)
+    ok, _, err = as_user(learner, f"insert into public.bookings (learner_id, guide_id, service_id, slot_id, scheduled_at) values ('{other}','{guide}','{svc}','{s2}', now());")
     expect("cannot book on behalf of someone else", not ok)
-    ok, _, err = as_user(learner, f"insert into public.bookings (learner_id, guide_id, service_id, scheduled_at) "
-                                  f"values ('{learner}','{guide}','{svc}', now() + interval '10 minutes');")
+    ok, _, err = as_user(learner, f"insert into public.bookings (learner_id, guide_id, service_id, slot_id, scheduled_at) values ('{learner}','{guide}','{svc}','{s_soon}', now());")
     expect("cannot book a slot in the next 2 hours", not ok)
+    ok, _, _ = as_user(guide, f"delete from public.availability_slots where id='{s1}';")
+    r = psql(f"select count(*) from public.availability_slots where id='{s1}';").stdout.strip()
+    expect("guide cannot delete a booked slot", r == "1", r)
     svc2 = psql(f"insert into public.services (guide_id,title,price_inr) values ('{guide2}','Test service',500) returning id;").stdout.strip().splitlines()[0]
-    ok, _, err = as_user(learner, f"insert into public.bookings (learner_id, guide_id, service_id, scheduled_at) "
-                                  f"values ('{learner}','{guide2}','{svc2}', {when});")
+    g2slot = psql(f"insert into public.availability_slots (guide_id, starts_at) values ('{guide2}', now() + interval '3 days') returning id;").stdout.strip().splitlines()[0]
+    ok, _, err = as_user(learner, f"insert into public.bookings (learner_id, guide_id, service_id, slot_id, scheduled_at) values ('{learner}','{guide2}','{svc2}','{g2slot}', now());")
     expect("cannot book an unverified guide", not ok)
 
     ok, out, _ = as_user(other, f"select count(*) from public.bookings where id='{bid}';")
@@ -153,10 +183,34 @@ def main():
     expect("learner cannot accept their own request", not ok)
     ok, _, _ = as_user(guide, f"update public.bookings set price_inr=1 where id='{bid}';")
     expect("guide cannot change the price", not ok)
+    ok, _, _ = as_user(guide, f"update public.bookings set scheduled_at=now() + interval '6 days' where id='{bid}';")
+    expect("time can only change through reschedule", not ok)
     ok, _, err = as_user(guide, f"update public.bookings set status='accepted', meeting_link='https://meet.google.com/abc-defg-hij' where id='{bid}';")
     expect("guide can accept and add a meeting link", ok, err)
     ok, _, _ = as_user(guide, f"update public.bookings set meeting_link='javascript:alert(1)' where id='{bid}';")
     expect("meeting link must be https", not ok)
+
+    print("reschedule")
+    ok, _, _ = as_user(other, f"select public.reschedule_booking('{bid}', '{s2}');")
+    expect("outsiders cannot reschedule", not ok)
+    ok, _, err = as_user(learner, f"select public.reschedule_booking('{bid}', '{s_soon}');")
+    expect("cannot reschedule into the next 2 hours", not ok)
+    ok, _, err = as_user(learner, f"select public.reschedule_booking('{bid}', '{s2}');")
+    r = psql(f"select status||'|'||last_rescheduled_by||'|'||reschedule_count||'|'||(slot_id='{s2}') from public.bookings where id='{bid}';").stdout.strip()
+    expect("learner reschedule moves the slot and needs the guide's OK again", ok and r == "requested|learner|1|true", err or r)
+    ok, out, _ = as_user(None, f"select string_agg(id::text, ',') from public.open_slots('{guide}');")
+    expect("old slot is free again after reschedule", s1 in out and s2 not in out, out)
+    as_user(guide, f"update public.bookings set status='accepted' where id='{bid}';")
+    ok, _, err = as_user(guide, f"select public.reschedule_booking('{bid}', '{s3}');")
+    r = psql(f"select status||'|'||last_rescheduled_by from public.bookings where id='{bid}';").stdout.strip()
+    expect("guide reschedule keeps the session accepted", ok and r == "accepted|guide", err or r)
+    b2 = as_user(l2, f"insert into public.bookings (learner_id, guide_id, service_id, slot_id, scheduled_at) values ('{l2}','{guide}','{svc}','{s2}', now()) returning id;")[1].splitlines()[0]
+    ok, _, err = as_user(learner, f"select public.reschedule_booking('{bid}', '{s2}');")
+    expect("cannot reschedule into a taken slot", not ok and "taken" in err, err)
+    ok, _, err = as_user(l2, f"update public.bookings set status='cancelled' where id='{b2}';")
+    expect("learner can cancel a request", ok, err)
+    ok, _, err = as_user(admin, f"update public.bookings set status='accepted' where id='{b2}';")
+    expect("admin can change a booking status", ok, err)
 
     # --- scorecards and reviews -------------------------------------------------
     print("scorecards and reviews")
@@ -179,18 +233,6 @@ def main():
     expect("directory shows rating", out == "5.0|1", out)
     ok, _, _ = as_user(learner, f"update public.bookings set status='cancelled' where id='{bid}';")
     expect("completed session cannot be cancelled", not ok)
-
-    # --- double booking ---------------------------------------------------------
-    print("double booking")
-    t = "date_trunc('hour', now()) + interval '5 days'"
-    b1 = as_user(learner, f"insert into public.bookings (learner_id, guide_id, service_id, scheduled_at) values ('{learner}','{guide}','{svc}', {t}) returning id;")[1].splitlines()[0]
-    l2 = signup("kavya@example.com", {"role": "learner", "full_name": "Kavya"})
-    b2 = as_user(l2, f"insert into public.bookings (learner_id, guide_id, service_id, scheduled_at) values ('{l2}','{guide}','{svc}', {t}) returning id;")[1].splitlines()[0]
-    as_user(guide, f"update public.bookings set status='accepted' where id='{b1}';")
-    ok, _, err = as_user(guide, f"update public.bookings set status='accepted' where id='{b2}';")
-    expect("guide cannot accept two sessions at the same time", not ok and "bookings_no_double_accept" in err, err)
-    ok, _, err = as_user(l2, f"update public.bookings set status='cancelled' where id='{b2}';")
-    expect("learner can cancel a request", ok, err)
 
     print(f"\n{PASS} passed, {FAIL} failed")
     psql(f"drop database {DB};", db="postgres")

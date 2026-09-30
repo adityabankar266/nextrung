@@ -12,10 +12,11 @@ NextRung is a two-sided career platform. Learners, from final-year students to e
 |---|---|
 | Accounts | Sign up as a learner or a guide, sign in, reset password by email |
 | Guide directory | Public list of verified guides, filter by field, profile with services and reviews |
-| Booking | Learners request a service at a date and time (IST); prices are locked at booking time |
+| Booking | Learners pick a service, then one of the guide's open date-wise time slots (IST); prices are locked at booking time |
+| Reschedule | Learners and guides can move an upcoming session to another free slot; a learner's change needs the guide's OK |
 | Learner dashboard | Upcoming and past sessions, meeting links, cancel, scorecards, star ratings, profile |
-| Guide dashboard | Requests to accept or decline, meeting links, mark completed, write scorecards, manage services, earnings this month after the platform fee, profile |
-| Admin dashboard | Accept or reject guide applications (with confirmation), see counts and recent bookings |
+| Guide dashboard | Requests to accept or reject, availability slots (with weekly repeat), meeting links, start session (placeholder), mark completed, scorecards, services, earnings, profile |
+| Admin dashboard | Accept or reject guide applications, accept/reject/cancel/reschedule bookings, switch to own guide dashboard |
 
 Not included yet: online payments, built-in video calls, email notifications for bookings. Guides paste a Google Meet or Zoom link for now.
 
@@ -39,7 +40,7 @@ supabase/         schema.sql, reset.sql, tests/
 ## Setup (one time)
 
 1. **Create a Supabase project** at supabase.com (free tier). Region: Mumbai.
-2. **Create the database:** Supabase → SQL Editor → New query → paste all of `supabase/schema.sql` → Run.
+2. **Create the database:** Supabase → SQL Editor → New query → paste all of `supabase/schema.sql` → Run. Then run each file in `supabase/migrations/` the same way, in number order.
 3. **Connect the site:** Supabase → Project Settings → API. Copy the Project URL and the `anon` `public` key into `js/config.js`. Never use the `service_role` key in the site.
 4. **Set the redirect URLs:** Supabase → Authentication → URL Configuration.
    - Site URL: `https://adityabankar266.github.io/nextrung/`
@@ -53,11 +54,12 @@ supabase/         schema.sql, reset.sql, tests/
 
 ## Database updates
 
-When the schema changes after launch, the change ships as a numbered file in `supabase/migrations/`. Run each new file once in the Supabase SQL Editor. New projects only need `schema.sql`, which already includes every update.
+Schema changes ship as numbered files in `supabase/migrations/`. Run each new file once in the Supabase SQL Editor. Every file is safe to run more than once.
 
 | File | What it adds |
 |---|---|
 | `002_guide_rejection.sql` | Admins can reject guide applications |
+| `003_slots_and_reschedule.sql` | Guide time slots, slot-based booking, rescheduling |
 
 ## Testing
 

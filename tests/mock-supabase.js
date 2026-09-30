@@ -2,6 +2,11 @@
 (function () {
   const now = Date.now(), H = 3600e3;
   const iso = ms => new Date(ms).toISOString();
+  // 12:00 IST (+ extra hours) on the day that is `days` from today, so slots never straddle midnight
+  const noon = (days, plus = 0) => {
+    const ymd = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date(now + days * 24 * H));
+    return iso(new Date(ymd + 'T12:00:00+05:30').getTime() + plus * H);
+  };
   const ROLE = localStorage.getItem('mockRole') || 'guide';
   const IDS = { guide: 'g1', learner: 'l1', admin: 'a1' };
   const me = IDS[ROLE];
@@ -18,6 +23,7 @@
     guide_profiles: [
       { user_id: 'g1', headline: 'Senior Business Analyst', field: 'Business Analysis', years_experience: '5–10 years', bio: 'Nine years in ERP and supply chain.', linkedin_url: 'https://linkedin.com/in/rahul', availability: 'Both', is_verified: true, is_rejected: false, created_at: iso(now - 50 * H) },
       { user_id: 'g2', headline: 'QA Lead', field: 'Quality Assurance', years_experience: '10–15 years', bio: 'Automation.', linkedin_url: 'https://linkedin.com/in/meera', availability: 'Weekends', is_verified: false, is_rejected: false, created_at: iso(now - 20 * H) },
+      { user_id: 'a1', headline: 'Senior BA', field: 'Business Analysis', years_experience: '5–10 years', bio: '', linkedin_url: 'https://linkedin.com/in/a', availability: 'Both', is_verified: true, is_rejected: false, created_at: iso(now - 90 * H) },
       { user_id: 'g3', headline: 'Dev', field: 'Software Development', years_experience: '3–5 years', bio: '', linkedin_url: null, availability: 'Both', is_verified: false, is_rejected: true, created_at: iso(now - 10 * H) }
     ],
     learner_profiles: [{ user_id: 'l1', career_stage: 'Final-year student', field: 'Business Analysis', goal: 'Crack interviews' }],
@@ -26,12 +32,19 @@
       { id: 's2', guide_id: 'g1', title: 'Career roadmap session', description: '', duration_min: 45, price_inr: 1499, is_active: true, created_at: iso(now) }
     ],
     bookings: [
-      { id: 'b1', learner_id: 'l1', guide_id: 'g1', service_id: 's1', service_title: 'Mock panel with scorecard', price_inr: 999, duration_min: 60, scheduled_at: iso(now + 48 * H), status: 'requested', learner_note: 'BA interview next week.', guide_note: '', meeting_link: null, created_at: iso(now - 2 * H) },
-      { id: 'b2', learner_id: 'l1', guide_id: 'g1', service_id: 's2', service_title: 'Career roadmap session', price_inr: 1499, duration_min: 45, scheduled_at: iso(now + 72 * H), status: 'accepted', learner_note: '', guide_note: '', meeting_link: 'https://meet.google.com/abc-defg-hij', created_at: iso(now - 5 * H) },
+      { id: 'b1', learner_id: 'l1', guide_id: 'g1', service_id: 's1', service_title: 'Mock panel with scorecard', price_inr: 999, duration_min: 60, slot_id: 'sl1', scheduled_at: noon(2), status: 'requested', last_rescheduled_by: 'learner', learner_note: 'BA interview next week.', guide_note: '', meeting_link: null, created_at: iso(now - 2 * H) },
+      { id: 'b2', learner_id: 'l1', guide_id: 'g1', service_id: 's2', service_title: 'Career roadmap session', price_inr: 1499, duration_min: 45, slot_id: 'sl2', scheduled_at: noon(3), status: 'accepted', learner_note: '', guide_note: '', meeting_link: 'https://meet.google.com/abc-defg-hij', created_at: iso(now - 5 * H) },
       { id: 'b3', learner_id: 'l1', guide_id: 'g1', service_id: 's1', service_title: 'Mock panel with scorecard', price_inr: 999, duration_min: 60, scheduled_at: iso(now - 72 * H), status: 'completed', learner_note: '', guide_note: '', meeting_link: null, created_at: iso(now - 100 * H) }
     ],
     scorecards: [{ booking_id: 'b3', criteria: [{ name: 'Problem framing', score: 4 }, { name: 'Communication', score: 3 }], overall: 3.5, note: 'Good structure.', fixes: '1. Slow down' }],
     reviews: [],
+    availability_slots: [
+      { id: 'sl1', guide_id: 'g1', starts_at: noon(2) },
+      { id: 'sl2', guide_id: 'g1', starts_at: noon(3) },
+      { id: 'sl3', guide_id: 'g1', starts_at: noon(4) },
+      { id: 'sl4', guide_id: 'g1', starts_at: noon(5) },
+      { id: 'sl5', guide_id: 'g1', starts_at: noon(5, 1) }
+    ],
     guide_directory: [{ guide_id: 'g1', full_name: 'Rahul Deshmukh', headline: 'Senior Business Analyst', field: 'Business Analysis', years_experience: '5–10 years', bio: 'Nine years in ERP and supply chain.', linkedin_url: 'https://linkedin.com/in/rahul', availability: 'Both', from_price: 999, rating: null, review_count: 0 }]
   };
   window.__writes = [];
@@ -42,11 +55,12 @@
       select(cols, opts) { if (opts && opts.head) head = true; if (opts && opts.count) countOpt = true; return q; },
       eq(c, v) { rows = rows.filter(r => r[c] === v); return q; },
       in(c, vs) { rows = rows.filter(r => vs.includes(r[c])); return q; },
+      gte(c, v) { rows = rows.filter(r => r[c] >= v); return q; },
       order() { return q; }, limit(n) { rows = rows.slice(0, n); return q; },
       single() { single = true; return q; }, maybeSingle() { single = true; return q; },
       update(p) { op = 'update'; payload = p; return q; },
       insert(p) { op = 'insert'; payload = p; return q; },
-      upsert(p) { op = 'upsert'; payload = p; return q; },
+      upsert(p, o) { op = 'upsert'; payload = p; window.__lastUpsertOptions = o; return q; },
       delete() { op = 'delete'; return q; },
       then(res, rej) {
         let out;
@@ -66,6 +80,14 @@
     createClient() {
       return {
         from: query,
+        rpc(fn, args) {
+          if (fn === 'open_slots') {
+            const taken = DB.bookings.filter(b => ['requested', 'accepted', 'completed'].includes(b.status)).map(b => b.slot_id);
+            return Promise.resolve({ data: DB.availability_slots.filter(x => x.guide_id === args.p_guide && !taken.includes(x.id)), error: null });
+          }
+          window.__writes.push({ table: 'rpc', op: fn, payload: args, rows: [] });
+          return Promise.resolve({ data: null, error: null });
+        },
         auth: {
           getSession: async () => ({ data: { session: localStorage.getItem('mockSignedOut') ? null : { user } } }),
           onAuthStateChange() { return { data: { subscription: { unsubscribe() {} } } }; },

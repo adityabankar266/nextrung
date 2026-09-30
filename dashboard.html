@@ -35,7 +35,7 @@
   const modal = document.getElementById('modal');
   const modalBody = document.getElementById('modal-body');
   const DEFAULT_CRITERIA = ['Problem framing', 'Domain knowledge', 'Communication & structure', 'Confidence under questioning'];
-  let me = null, profile = null, activeTab = null;
+  let me = null, profile = null, activeTab = null, hasGuideProfile = false;
 
   // ---------- small helpers ----------
   const byId = (list, key) => Object.fromEntries((list || []).map(r => [r[key], r]));
@@ -54,6 +54,40 @@
       ${link ? `<a class="btn" href="${esc(link)}" target="_blank" rel="noopener">Open meeting link for now</a>` : '<p class="muted">No meeting link has been added for this session yet.</p>'}
       <button class="btn ghost" type="button" data-close>Close</button>`);
   }
+  // Who moved this session last, in words for the person reading it.
+  function rescheduleNote(b, viewer) {
+    if (!b.last_rescheduled_by || !['requested', 'accepted'].includes(b.status)) return '';
+    const by = b.last_rescheduled_by === viewer ? 'you' : b.last_rescheduled_by === 'admin' ? 'NextRung' : 'the ' + b.last_rescheduled_by;
+    const wait = b.status === 'requested' && b.last_rescheduled_by === 'learner'
+      ? (viewer === 'guide' ? ' Please accept or reject the new time.' : ' Waiting for the guide to confirm the new time.') : '';
+    return `<div class="resched-note">↻ Rescheduled by ${by}.${wait}</div>`;
+  }
+  const canMove = b => ['requested', 'accepted'].includes(b.status) && new Date(b.scheduled_at).getTime() > Date.now();
+
+  // Move a session to another free slot of the same guide.
+  async function rescheduleBox(b, who, viewer, after) {
+    openModal(`
+      <div class="modal-head"><h3>Reschedule session</h3><button class="x" data-close aria-label="Close">×</button></div>
+      <p><strong>${esc(b.service_title)}</strong> with ${esc(who)}<br><span class="muted">Now: ${NR.when(b.scheduled_at)}</span></p>
+      <div id="rs-slots" class="stack" style="gap:8px"><p class="spinner">Loading free slots…</p></div>
+      <p class="demo-note">${viewer === 'learner' ? 'Your guide will need to confirm the new time.' : 'The learner will see the new time straight away.'}</p>
+      <div class="bk-actions"><button class="btn" type="button" id="rs-save">Confirm new time</button><button class="btn ghost" type="button" data-close>Keep current time</button></div>`);
+    const { data, error } = await sb.rpc('open_slots', { p_guide: b.guide_id });
+    const el = document.getElementById('rs-slots');
+    if (!el) return;
+    if (error) { el.innerHTML = `<div class="notice bad">${esc(NR.explain(error))}</div>`; return; }
+    const pk = NR.slotPicker(el, data || [], viewer === 'guide'
+      ? 'You have no other free slots. Add some in the Availability tab first.'
+      : 'There are no other free slots right now.');
+    document.getElementById('rs-save').onclick = async () => {
+      const slot = pk.slot();
+      if (!slot) return NR.toast('Choose a new date and time.', true);
+      if (await run(sb.rpc('reschedule_booking', { p_booking: b.id, p_slot: slot.id }), 'Moved to ' + NR.when(slot.starts_at) + '.')) {
+        closeModal(); after();
+      }
+    };
+  }
+
   function openModal(html) { modalBody.innerHTML = html; if (!modal.open) modal.showModal(); }
   function closeModal() { if (modal.open) modal.close(); }
   modal.addEventListener('click', e => { if (e.target === modal || e.target.closest('[data-close]')) closeModal(); });
@@ -140,13 +174,15 @@
         </div>
         ${b.status === 'accepted' && NR.safeUrl(b.meeting_link) ? `<div>Meeting link: <a class="meet" href="${esc(NR.safeUrl(b.meeting_link))}" target="_blank" rel="noopener">${esc(b.meeting_link)}</a></div>` : ''}
         ${b.status === 'accepted' && !b.meeting_link ? '<div class="bk-meta">Your guide will add the meeting link before the session.</div>' : ''}
-        ${b.status === 'requested' ? '<div class="bk-meta">Waiting for the guide to confirm.</div>' : ''}
+        ${b.status === 'requested' && !b.last_rescheduled_by ? '<div class="bk-meta">Waiting for the guide to confirm.</div>' : ''}
+        ${rescheduleNote(b, 'learner')}
         ${b.guide_note ? `<div class="bk-note"><strong>Note from guide</strong>\n${esc(b.guide_note)}</div>` : ''}
         <div class="bk-actions">
           ${b.status === 'accepted' ? `<button class="btn xs" type="button" data-act="start" data-id="${b.id}">▶ Start session</button>` : ''}
           ${b.scorecard ? `<button class="btn xs" type="button" data-act="view-card" data-id="${b.id}">View scorecard</button>` : ''}
           ${b.status === 'completed' && !b.review ? `<button class="btn xs" type="button" data-act="review" data-id="${b.id}">Rate this session</button>` : ''}
           ${b.review ? `<span class="rating">You rated ${'★'.repeat(b.review.rating)}</span>` : ''}
+          ${canMove(b) ? `<button class="btn ghost xs" type="button" data-act="resched" data-id="${b.id}">Reschedule</button>` : ''}
           ${['requested', 'accepted'].includes(b.status) ? `<button class="btn ghost xs" type="button" data-act="cancel" data-id="${b.id}">Cancel</button>` : ''}
         </div>
       </div>`;
@@ -205,6 +241,7 @@
       });
       if (a.dataset.act === 'review') reviewBox(b);
       if (a.dataset.act === 'start') startSession(b, b.guide_name);
+      if (a.dataset.act === 'resched') rescheduleBox(b, b.guide_name, 'learner', () => { activeTab = 'sessions'; learnerView(); });
     };
     document.getElementById('learner-profile').onsubmit = async e => {
       e.preventDefault();
@@ -256,13 +293,17 @@
   // GUIDE
   // =====================================================================
   async function guideView() {
-    const [gp, svc, bookings, ct, rv] = await Promise.all([
+    const [gp, svc, bookings, ct, rv, sl] = await Promise.all([
       sb.from('guide_profiles').select('*').eq('user_id', me.id).maybeSingle(),
       sb.from('services').select('*').eq('guide_id', me.id).order('created_at'),
       loadBookings('guide_id'),
       sb.from('contacts').select('*').eq('user_id', me.id).maybeSingle(),
-      sb.from('reviews').select('rating').eq('guide_id', me.id)
+      sb.from('reviews').select('rating').eq('guide_id', me.id),
+      sb.from('availability_slots').select('*').eq('guide_id', me.id).gte('starts_at', new Date().toISOString()).order('starts_at')
     ]);
+    const slots = sl.data || [];
+    const slotBooking = {};
+    bookings.filter(b => b.slot_id && ['requested', 'accepted', 'completed'].includes(b.status)).forEach(b => { slotBooking[b.slot_id] = b; });
     const g = gp.data || {};
     const services = svc.data || [];
     const requests = bookings.filter(b => b.status === 'requested' && new Date(b.scheduled_at) > new Date());
@@ -293,15 +334,54 @@
           ['Price', NR.inr(b.price_inr) + ` <span class="muted">(you receive ${NR.inr(Math.round(b.price_inr * (1 - NR.PLATFORM_FEE)))})</span>`],
           ['Requested on', NR.when(b.created_at)]
         ])}
+        ${rescheduleNote(b, 'guide')}
         ${b.learner_note ? `<div class="bk-note"><strong>Learner's note</strong>\n${esc(b.learner_note)}</div>` : ''}
         ${actions}
       </div>`;
+
+    // Availability: upcoming slots grouped by day, plus a form to add more.
+    const TIMES = [];
+    for (let m = 7 * 60; m <= 22 * 60; m += 30) TIMES.push(String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'));
+    const slotDays = {};
+    slots.forEach(x => { (slotDays[NR.istDate(x.starts_at)] = slotDays[NR.istDate(x.starts_at)] || []).push(x); });
+    const freeCount = slots.filter(x => !slotBooking[x.id]).length;
+    const availabilityHtml = sl.error
+      ? `<div class="notice bad">${esc(NR.explain(sl.error))}</div>`
+      : `<div class="grid-main">
+          <div class="card">
+            <div class="day-head"><h3>Your upcoming slots</h3><span class="muted" style="font-size:.85rem">${freeCount} free · ${slots.length - freeCount} booked</span></div>
+            ${Object.keys(slotDays).sort().map(d => {
+              const list = slotDays[d];
+              const free = list.filter(x => !slotBooking[x.id]);
+              return `<div class="day-block">
+                <div class="day-head"><strong>${esc(NR.istDay(list[0].starts_at))}</strong>
+                  ${free.length ? `<button class="linkish" type="button" data-act="clear-day" data-ids="${free.map(x => x.id).join(',')}">Remove free slots</button>` : ''}</div>
+                <div class="chip-row flowing">${list.map(x => slotBooking[x.id]
+                  ? `<span class="chip chip-inline booked" title="Booked by ${esc(slotBooking[x.id].learner_name)}">${esc(NR.istTime(x.starts_at))} · ${esc(slotBooking[x.id].learner_name.split(' ')[0])}</span>`
+                  : `<button class="chip chip-inline" type="button" data-act="del-slot" data-id="${x.id}" aria-label="Remove ${esc(NR.istTime(x.starts_at))} slot">${esc(NR.istTime(x.starts_at))}<span class="del" aria-hidden="true">×</span></button>`).join('')}</div>
+              </div>`;
+            }).join('') || '<div class="empty">No upcoming slots. Add the times you are free so learners can book you.</div>'}
+          </div>
+          <form class="card" id="slot-form" novalidate>
+            <h3>Add time slots</h3>
+            <div class="field"><label for="sl-date">Date</label><input id="sl-date" type="date" min="${NR.todayIST()}" value="${NR.todayIST()}"></div>
+            <div class="field"><span class="field-legend">Start times (IST) · tap to select</span>
+              <div class="time-grid" id="sl-times">${TIMES.map(t => `<button type="button" class="chip" data-time="${t}" aria-pressed="false">${esc(NR.istTime(`2026-01-05T${t}:00+05:30`))}</button>`).join('')}</div></div>
+            <div class="field"><label for="sl-repeat">Repeat</label>
+              <select id="sl-repeat"><option value="1">Only this date</option><option value="2">Same weekday, 2 weeks</option><option value="4">Same weekday, 4 weeks</option><option value="8">Same weekday, 8 weeks</option></select></div>
+            <p class="demo-note">Leave enough time between slots for your longest service. Times already passed are skipped.</p>
+            <button class="btn" type="submit" style="align-self:flex-start">Add slots</button>
+          </form>
+        </div>`;
 
     root.innerHTML = `
       <div class="page-head">
         <div><div class="meta">${esc(g.headline || 'Guide')}${g.is_verified ? ' · Verified guide' : ''}</div>
           <h1 style="font-size:clamp(1.8rem,4vw,2.4rem)">${greeting()}, ${esc(firstName())}</h1></div>
-        ${g.is_verified ? `<a class="btn ghost" href="guides.html?id=${encodeURIComponent(me.id)}">View public profile</a>` : ''}
+        <div class="view-switch">
+          ${profile.role === 'admin' ? '<button class="btn ghost" type="button" data-switch="admin">Back to admin</button>' : ''}
+          ${g.is_verified ? `<a class="btn ghost" href="guides.html?id=${encodeURIComponent(me.id)}">View public profile</a>` : ''}
+        </div>
       </div>
       ${g.is_verified ? '' : g.is_rejected
         ? `<div class="notice bad" style="margin-bottom:18px">Your guide application was not approved this time. If you think this is a mistake or have more experience to share, update your profile and contact us.</div>`
@@ -314,6 +394,7 @@
       ${tabs([
         { id: 'requests', label: 'Requests', badge: requests.length },
         { id: 'upcoming', label: 'Upcoming', badge: upcoming.length },
+        { id: 'availability', label: 'Availability' },
         { id: 'past', label: 'Past' },
         { id: 'services', label: 'Services' },
         { id: 'profile', label: 'Profile' }], tab)}
@@ -324,6 +405,7 @@
             <input type="url" placeholder="Meeting link (https://meet.google.com/…)" id="ml-${b.id}" aria-label="Meeting link">
             <button class="btn xs" type="button" data-act="accept" data-id="${b.id}">Accept</button>
             <button class="btn ghost xs" type="button" data-act="decline" data-id="${b.id}">Reject</button>
+            <button class="btn ghost xs" type="button" data-act="resched" data-id="${b.id}">Reschedule</button>
           </div>`)).join('') || '<div class="empty">No new requests right now.</div>'}
       </div>
 
@@ -337,9 +419,12 @@
             <button class="btn xs" type="button" data-act="start" data-id="${b.id}">▶ Start session</button>
             <button class="btn ghost xs" type="button" data-act="scorecard" data-id="${b.id}">${b.scorecard ? 'Edit scorecard' : 'Write scorecard'}</button>
             ${new Date(b.scheduled_at) <= new Date() ? `<button class="btn xs" type="button" data-act="complete" data-id="${b.id}">Mark completed</button>` : ''}
+            ${canMove(b) ? `<button class="btn ghost xs" type="button" data-act="resched" data-id="${b.id}">Reschedule</button>` : ''}
             <button class="btn ghost xs" type="button" data-act="guide-cancel" data-id="${b.id}">Cancel</button>
           </div>`)).join('') || '<div class="empty">No accepted sessions yet.</div>'}
       </div>
+
+      <div data-panel="availability" ${tab !== 'availability' ? 'hidden' : ''}>${availabilityHtml}</div>
 
       <div data-panel="past" class="stack" ${tab !== 'past' ? 'hidden' : ''}>
         ${past.map(b => card(b, `
@@ -423,6 +508,17 @@
           });
           break;
         case 'start': startSession(b, b.learner_name); break;
+        case 'resched': rescheduleBox(b, b.learner_name, 'guide', () => refresh(activeTab || 'upcoming')); break;
+        case 'del-slot':
+          if (await run(sb.from('availability_slots').delete().eq('id', id), 'Slot removed.')) refresh('availability');
+          break;
+        case 'clear-day': {
+          const ids = (a.dataset.ids || '').split(',').filter(Boolean);
+          confirmBox('Remove free slots?', `${ids.length} free slot${ids.length === 1 ? '' : 's'} on this day will be removed. Booked slots stay.`, 'Remove', async () => {
+            if (await run(sb.from('availability_slots').delete().in('id', ids), 'Free slots removed.')) refresh('availability');
+          });
+          break;
+        }
         case 'save-link': {
           const ml = link(id);
           if (ml && !NR.safeUrl(ml)) return NR.toast('The meeting link must start with https://', true);
@@ -449,6 +545,39 @@
         }
       }
     };
+
+    const slotForm = document.getElementById('slot-form');
+    if (slotForm) {
+      slotForm.querySelector('#sl-times').onclick = e => {
+        const c = e.target.closest('[data-time]');
+        if (c) c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+      };
+      slotForm.onsubmit = async e => {
+        e.preventDefault();
+        const date = document.getElementById('sl-date').value;
+        const times = [...slotForm.querySelectorAll('[data-time][aria-pressed="true"]')].map(c => c.dataset.time);
+        const weeks = parseInt(document.getElementById('sl-repeat').value, 10) || 1;
+        if (!date) return NR.toast('Choose a date.', true);
+        if (!times.length) return NR.toast('Select at least one start time.', true);
+        const rows = [];
+        for (let w = 0; w < weeks; w++) {
+          const d = new Date(date + 'T00:00:00Z');
+          d.setUTCDate(d.getUTCDate() + 7 * w);
+          const day = d.toISOString().slice(0, 10);
+          times.forEach(t => {
+            const at = new Date(`${day}T${t}:00+05:30`);
+            if (at.getTime() > Date.now() + 5 * 60e3) rows.push({ guide_id: me.id, starts_at: at.toISOString() });
+          });
+        }
+        if (!rows.length) return NR.toast('Those times have already passed. Choose a later date or time.', true);
+        const btn = slotForm.querySelector('button[type=submit]');
+        btn.disabled = true;
+        const ok = await run(sb.from('availability_slots').upsert(rows, { onConflict: 'guide_id,starts_at', ignoreDuplicates: true }),
+          `${rows.length} slot${rows.length === 1 ? '' : 's'} added.`);
+        btn.disabled = false;
+        if (ok) refresh('availability');
+      };
+    }
 
     document.getElementById('svc-form').onsubmit = async e => {
       e.preventDefault();
@@ -597,7 +726,8 @@
     };
 
     root.innerHTML = `
-      <div class="page-head"><div><div class="meta">Admin</div><h1 style="font-size:clamp(1.8rem,4vw,2.4rem)">${greeting()}, ${esc(firstName())}</h1></div></div>
+      <div class="page-head"><div><div class="meta">Admin</div><h1 style="font-size:clamp(1.8rem,4vw,2.4rem)">${greeting()}, ${esc(firstName())}</h1></div>
+        ${hasGuideProfile ? '<button class="btn ghost" type="button" data-switch="guide">Open my guide dashboard</button>' : ''}</div>
       <div class="stats" style="margin-bottom:22px">
         <div class="stat"><div class="n">${learners.count ?? '–'}</div><div class="l">Learners</div></div>
         <div class="stat"><div class="n">${verified.length} <small class="muted" style="font-size:.9rem">/ ${guides.length}</small></div><div class="l">Verified guides / all guides</div></div>
@@ -610,7 +740,14 @@
       <div data-panel="bookings" class="stack" ${tab !== 'bookings' ? 'hidden' : ''}>${bk.map(b => `
         <div class="bk"><div class="bk-top"><div>
           <div class="bk-title">${esc((P[b.learner_id] || {}).full_name || 'Learner')} → ${esc((P[b.guide_id] || {}).full_name || 'Guide')}</div>
-          <div class="bk-meta">${esc(b.service_title)} · ${NR.when(b.scheduled_at)} · ${NR.inr(b.price_inr)}</div></div>${status(b.status)}</div></div>`).join('')
+          <div class="bk-meta">${esc(b.service_title)} · ${NR.when(b.scheduled_at)} · ${NR.inr(b.price_inr)}</div></div>${status(b.status)}</div>
+          ${rescheduleNote(b, 'admin')}
+          ${['requested', 'accepted'].includes(b.status) ? `<div class="bk-actions">
+            ${b.status === 'requested' ? `<button class="btn xs" type="button" data-act="bk-accept" data-id="${b.id}">Accept</button>
+              <button class="btn ghost xs" type="button" data-act="bk-reject" data-id="${b.id}">Reject</button>` : ''}
+            ${b.status === 'accepted' ? `<button class="btn ghost xs" type="button" data-act="bk-cancel" data-id="${b.id}">Cancel</button>` : ''}
+            ${canMove(b) ? `<button class="btn ghost xs" type="button" data-act="bk-resched" data-id="${b.id}">Reschedule</button>` : ''}
+          </div>` : ''}</div>`).join('')
         || '<div class="empty">No bookings yet.</div>'}</div>`;
 
     root.onclick = async e => {
@@ -619,6 +756,20 @@
       const a = e.target.closest('[data-act]');
       if (!a) return;
       const id = a.dataset.id;
+      const bkRow = bk.find(x => x.id === id);
+      if (bkRow) {
+        const who = `${esc((P[bkRow.learner_id] || {}).full_name || 'Learner')} with ${esc((P[bkRow.guide_id] || {}).full_name || 'Guide')}`;
+        const when = NR.when(bkRow.scheduled_at);
+        const setStatus = async (st, msg) => {
+          if (await run(sb.from('bookings').update({ status: st }).eq('id', id), msg)) { activeTab = 'bookings'; adminView(); }
+        };
+        switch (a.dataset.act) {
+          case 'bk-accept': return setStatus('accepted', 'Booking accepted.');
+          case 'bk-reject': return confirmBox('Reject this booking?', `${esc(bkRow.service_title)} · ${who} · ${when}. This can't be undone.`, 'Yes, reject', () => setStatus('declined', 'Booking rejected.'));
+          case 'bk-cancel': return confirmBox('Cancel this booking?', `${esc(bkRow.service_title)} · ${who} · ${when}.`, 'Cancel booking', () => setStatus('cancelled', 'Booking cancelled.'));
+          case 'bk-resched': return rescheduleBox(bkRow, (P[bkRow.guide_id] || {}).full_name || 'Guide', 'admin', () => { activeTab = 'bookings'; adminView(); });
+        }
+      }
       const g = guides.find(x => x.user_id === id) || {};
       const who = esc((P[id] || {}).full_name || 'this guide');
       const save = async (changes, msg) => {
@@ -650,7 +801,25 @@
       root.innerHTML = `<div class="notice bad">We couldn't find your profile. If this account was created before the database was set up, sign up again with a new email or ask the admin to reset it.</div>`;
       return;
     }
-    const view = profile.role === 'admin' ? adminView : profile.role === 'guide' ? guideView : learnerView;
+    // An admin who is also a guide can switch to their own guide dashboard.
+    if (profile.role === 'admin') {
+      const { data } = await sb.from('guide_profiles').select('user_id').eq('user_id', me.id).maybeSingle();
+      hasGuideProfile = !!data;
+    }
+    const savedMode = (() => { try { return sessionStorage.getItem('nr-view'); } catch (e) { return null; } })();
+    const pickView = mode => profile.role === 'admin'
+      ? (mode === 'guide' && hasGuideProfile ? guideView : adminView)
+      : profile.role === 'guide' ? guideView : learnerView;
+    root.addEventListener('click', async e => {
+      const sw = e.target.closest('[data-switch]');
+      if (!sw) return;
+      e.stopPropagation();
+      try { sessionStorage.setItem('nr-view', sw.dataset.switch); } catch (err) {}
+      activeTab = null;
+      root.innerHTML = '<p class="spinner">Loading…</p>';
+      try { await pickView(sw.dataset.switch)(); } catch (err) { root.innerHTML = `<div class="notice bad">${esc(NR.explain(err))}</div>`; }
+    }, true);
+    const view = pickView(savedMode);
     try { await view(); }
     catch (e) { root.innerHTML = `<div class="notice bad">${esc(NR.explain(e))}</div>`; }
   })();
