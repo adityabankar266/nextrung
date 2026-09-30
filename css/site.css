@@ -56,7 +56,13 @@ nav.links a:hover{color:var(--ink)}
 .btn.sm{padding:8px 16px;font-size:.88rem}
 .btn.xs{padding:6px 12px;font-size:.8rem}
 @media (max-width:900px){nav.links{display:none}}
-@media (max-width:460px){.nav-cta .ghost{display:none}}
+@media (max-width:460px){
+  header.top .wrap{gap:10px}
+  .brand{font-size:1.05rem;gap:8px}
+  .brand-mark{width:26px;height:26px}
+  .nav-cta{gap:6px}
+  .nav-cta .btn.sm{padding:7px 12px;font-size:.82rem}
+}
 
 /* hero */
 .hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;padding-block:60px 64px}
