@@ -77,6 +77,13 @@
       return url;
     },
 
+    // Free video room (Jitsi Meet, no account needed), used when a guide doesn't add their own link.
+    newMeetLink() {
+      const abc = 'abcdefghjkmnpqrstuvwxyz23456789', bytes = new Uint8Array(12);
+      crypto.getRandomValues(bytes);
+      return 'https://meet.jit.si/NextRung-' + Array.from(bytes, x => abc[x % abc.length]).join('');
+    },
+
     safeUrl(u) {
       return /^https:\/\//i.test(u || '') ? u : '';
     },

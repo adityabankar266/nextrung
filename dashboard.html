@@ -61,13 +61,20 @@
   // Booking details as labelled rows, so the chosen service and time are easy to scan.
   const details = rows => `<dl class="kv">${rows.filter(r => r[1]).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join('')}</dl>`;
   // Placeholder until the Zoom integration is built.
-  function startSession(b, who) {
+  async function startSession(b, who) {
+    // An accepted session without a link gets a free video room, created by whoever can edit it.
+    if (!NR.safeUrl(b.meeting_link) && b.status === 'accepted' && (me.id === b.guide_id || profile.role === 'admin')) {
+      const fresh = NR.newMeetLink();
+      const { error } = await sb.from('bookings').update({ meeting_link: fresh }).eq('id', b.id);
+      if (!error) b.meeting_link = fresh;
+    }
     const link = NR.safeUrl(b.meeting_link);
     openModal(`
       <div class="modal-head"><h3>Start session</h3><button class="x" data-close aria-label="Close">×</button></div>
       <p><strong>${esc(b.service_title)}</strong> with ${esc(who)}<br><span class="muted">${NR.when(b.scheduled_at)} · ${b.duration_min} min</span></p>
-      <div class="notice">Built-in video sessions are coming soon. This button will open the Zoom call directly.</div>
-      ${link ? `<a class="btn" href="${esc(link)}" target="_blank" rel="noopener">Open meeting link for now</a>` : '<p class="muted">No meeting link has been added for this session yet.</p>'}
+      <div class="notice">Zoom integration is coming soon. For now, sessions use the link below.</div>
+      ${link ? `<a class="btn" href="${esc(link)}" target="_blank" rel="noopener">Join video call</a><p class="meet">${esc(link)}</p>`
+             : '<p class="muted">Your guide hasn\'t added a meeting link yet. It will appear here as soon as they do.</p>'}
       <button class="btn ghost" type="button" data-close>Close</button>`);
   }
   // ---------- profile pieces shared by learners, guides and admins ----------
@@ -554,7 +561,7 @@
       <div data-panel="requests" class="stack" ${tab !== 'requests' ? 'hidden' : ''}>
         ${requests.map(b => card(b, `
           <div class="bk-actions">
-            <input type="url" placeholder="Meeting link (https://meet.google.com/…)" id="ml-${b.id}" aria-label="Meeting link">
+            <input type="url" placeholder="Meeting link (optional, we'll create one)" id="ml-${b.id}" aria-label="Meeting link">
             <button class="btn xs" type="button" data-act="accept" data-id="${b.id}">Accept</button>
             <button class="btn ghost xs" type="button" data-act="decline" data-id="${b.id}">Reject</button>
             <button class="btn ghost xs" type="button" data-act="resched" data-id="${b.id}">Reschedule</button>
@@ -663,7 +670,9 @@
         case 'accept': {
           const ml = link(id);
           if (ml && !NR.safeUrl(ml)) return NR.toast('The meeting link must start with https://', true);
-          if (await run(sb.from('bookings').update({ status: 'accepted', meeting_link: ml || null }).eq('id', id), 'Session accepted.')) refresh('requests');
+          const useLink = ml || b.meeting_link || NR.newMeetLink();
+          if (await run(sb.from('bookings').update({ status: 'accepted', meeting_link: useLink }).eq('id', id),
+            ml ? 'Session accepted.' : 'Session accepted. A video link was created; you can replace it in Upcoming.')) refresh('requests');
           break;
         }
         case 'decline':
@@ -939,7 +948,9 @@
           if (await run(sb.from('bookings').update({ status: st }).eq('id', id), msg)) { activeTab = 'bookings'; adminView(); }
         };
         switch (a.dataset.act) {
-          case 'bk-accept': return setStatus('accepted', 'Booking accepted.');
+          case 'bk-accept':
+            if (await run(sb.from('bookings').update({ status: 'accepted', meeting_link: bkRow.meeting_link || NR.newMeetLink() }).eq('id', id), 'Booking accepted with a video link.')) { activeTab = 'bookings'; adminView(); }
+            return;
           case 'bk-reject': return confirmBox('Reject this booking?', `${esc(bkRow.service_title)} · ${who} · ${when}. This can't be undone.`, 'Yes, reject', () => setStatus('declined', 'Booking rejected.'));
           case 'bk-cancel': return confirmBox('Cancel this booking?', `${esc(bkRow.service_title)} · ${who} · ${when}.`, 'Cancel booking', () => setStatus('cancelled', 'Booking cancelled.'));
           case 'bk-resched': return rescheduleBox(bkRow, (P[bkRow.guide_id] || {}).full_name || 'Guide', 'admin', () => { activeTab = 'bookings'; adminView(); });
