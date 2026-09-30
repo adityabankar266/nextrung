@@ -33,7 +33,7 @@
     ],
     bookings: [
       { id: 'b1', learner_id: 'l1', guide_id: 'g1', service_id: 's1', service_title: 'Mock panel with scorecard', price_inr: 999, duration_min: 60, slot_id: 'sl1', scheduled_at: noon(2), status: 'requested', last_rescheduled_by: 'learner', learner_note: 'BA interview next week.', guide_note: '', meeting_link: null, created_at: iso(now - 2 * H) },
-      { id: 'b2', learner_id: 'l1', guide_id: 'g1', service_id: 's2', service_title: 'Career roadmap session', price_inr: 1499, duration_min: 45, slot_id: 'sl2', scheduled_at: noon(3), status: 'accepted', learner_note: '', guide_note: '', meeting_link: 'https://meet.google.com/abc-defg-hij', created_at: iso(now - 5 * H) },
+      { id: 'b2', learner_id: 'l1', guide_id: 'g1', service_id: 's2', service_title: 'Career roadmap session', price_inr: 1499, duration_min: 45, slot_id: 'sl2', scheduled_at: localStorage.getItem('mockSoon') ? iso(now + 10 * 60e3) : noon(3), status: 'accepted', learner_note: '', guide_note: '', meeting_link: 'https://meet.google.com/abc-defg-hij', created_at: iso(now - 5 * H) },
       { id: 'b3', learner_id: 'l1', guide_id: 'g1', service_id: 's1', service_title: 'Mock panel with scorecard', price_inr: 999, duration_min: 60, scheduled_at: iso(now - 72 * H), status: 'completed', learner_note: '', guide_note: '', meeting_link: null, created_at: iso(now - 100 * H) }
     ],
     scorecards: [{ booking_id: 'b3', criteria: [{ name: 'Problem framing', score: 4 }, { name: 'Communication', score: 3 }], overall: 3.5, note: 'Good structure.', fixes: '1. Slow down' }],
@@ -95,6 +95,9 @@
           if (fn === 'open_slots') {
             const taken = DB.bookings.filter(b => ['requested', 'accepted', 'completed'].includes(b.status)).map(b => b.slot_id);
             return Promise.resolve({ data: DB.availability_slots.filter(x => x.guide_id === args.p_guide && !taken.includes(x.id)), error: null });
+          }
+          if (fn === 'my_payment_details') {
+            return Promise.resolve({ data: DB.bookings.filter(b => b.learner_id === user.id && ['accepted', 'completed'].includes(b.status)).map(b => ({ booking_id: b.id, upi: 'rahul.d@okicici' })), error: null });
           }
           window.__writes.push({ table: 'rpc', op: fn, payload: args, rows: [] });
           return Promise.resolve({ data: null, error: null });

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="NextRung: career guidance from verified professionals for freshers and experienced people. Mock panels, workshops, career switch roadmaps and more.">
+<meta name="description" content="NextRung: career guidance from verified professionals for freshers and experienced people. Mock panels, career switch roadmaps, resume reviews and more.">
 <title>NextRung</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,6 +12,16 @@
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/theme.css">
 <meta name="theme-color" content="#0B2545">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NextRung">
+<meta property="og:title" content="NextRung · Career guidance from people one rung ahead">
+<meta property="og:description" content="Book one-to-one sessions with verified professionals in your field. Mock panels, career roadmaps and resume reviews, with a written scorecard after every session.">
+<meta property="og:image" content="https://adityabankar266.github.io/nextrung/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
 
@@ -40,10 +50,10 @@
         <h1>Reach your next rung with people who have <em>already climbed it</em>.</h1>
         <p class="lede">Prepare for interviews, plan a career switch, or get ready for your next role. Book one-to-one sessions with working professionals in your field, and leave each one with clear feedback and next steps.</p>
         <div class="doors guest-only">
-          <a class="door primary" href="login.html?mode=signup&amp;role=learner">
+          <a class="door primary" href="guides.html">
             <span class="who">For learners</span>
             <span class="what">I want guidance</span>
-            <span class="arrow">Freshers, job seekers, working professionals →</span>
+            <span class="arrow">Browse verified guides, free →</span>
           </a>
           <a class="door" href="login.html?mode=signup&amp;role=guide">
             <span class="who">For professionals</span>
@@ -99,8 +109,8 @@
             <h3 style="margin-top:6px">Get your first job</h3>
           </div>
           <p class="tagline">For final-year students and recent graduates.</p>
-          <div class="svc"><span class="ic">Q&amp;A</span><span class="t">Question bank</span><span class="d">Role-specific questions with model answers and frameworks such as STAR.</span></div>
-          <div class="svc"><span class="ic">WS</span><span class="t">Interview workshops</span><span class="d">Live group sessions on how interviewers score answers.</span></div>
+          <div class="svc"><span class="ic">IP</span><span class="t">Interview practice</span><span class="d">One-to-one practice with role-specific questions, model answers and frameworks such as STAR.</span></div>
+          <div class="svc"><span class="ic">WS</span><span class="t">Interview workshops <span class="tag soon">Coming soon</span></span><span class="d">Live group sessions on how interviewers score answers.</span></div>
           <div class="svc"><span class="ic">MP</span><span class="t">Mock panels &amp; case rounds</span><span class="d">Present a real problem, answer follow-ups, get a scorecard.</span></div>
           <div class="svc"><span class="ic">CV</span><span class="t">Resume &amp; LinkedIn review</span><span class="d">Make your first resume clear and recruiter-ready.</span></div>
         </div>
@@ -130,18 +140,18 @@
           <h3>If you are looking for guidance</h3>
           <ol class="steps">
             <li><span class="s-t">Create your profile</span><span class="s-d">Tell us your field, experience and goal.</span></li>
-            <li><span class="s-t">Choose a guide or a package</span><span class="s-d">Browse verified professionals by field, experience and price.</span></li>
-            <li><span class="s-t">Attend your session</span><span class="s-d">Mock panel, workshop, roadmap or review, on video.</span></li>
-            <li><span class="s-t">Get feedback and a plan</span><span class="s-d">Scorecard, recording and next steps in your portal within 24 hours.</span></li>
+            <li><span class="s-t">Choose a guide and a time</span><span class="s-d">Browse verified professionals by field, experience and price.</span></li>
+            <li><span class="s-t">Attend your session</span><span class="s-d">Mock panel, roadmap or review, on video.</span></li>
+            <li><span class="s-t">Get feedback and a plan</span><span class="s-d">A written scorecard and next steps in your dashboard.</span></li>
           </ol>
         </div>
         <div class="lane">
           <h3>If you want to guide others</h3>
           <ol class="steps">
             <li><span class="s-t">Apply with your experience</span><span class="s-d">Share your LinkedIn, field and the services you want to offer.</span></li>
-            <li><span class="s-t">Get verified</span><span class="s-d">A short call to confirm your background and hiring experience.</span></li>
+            <li><span class="s-t">Get verified</span><span class="s-d">Our team checks your LinkedIn, current role and hiring experience.</span></li>
             <li><span class="s-t">Set your services and slots</span><span class="s-d">Choose your price, session types and availability.</span></li>
-            <li><span class="s-t">Guide and get paid</span><span class="s-d">Run sessions, share scorecards, receive weekly payouts.</span></li>
+            <li><span class="s-t">Guide and get paid</span><span class="s-d">Run sessions, share scorecards, and get paid by learners.</span></li>
           </ol>
         </div>
       </div>
@@ -153,7 +163,7 @@
       <div class="sec-head">
         <span class="eyebrow">Fields covered</span>
         <h2 id="fields-h">Try a few questions from each field</h2>
-        <p class="lede">A sample from the question bank, plus the kind of case brief a learner presents in a panel round.</p>
+        <p class="lede">Sample questions with how to answer them, plus the kind of case brief a learner presents in a panel round.</p>
       </div>
       <div class="tabs" role="tablist" aria-label="Choose a field" id="tabs"></div>
       <div class="panel" id="panel" role="tabpanel" aria-live="polite"></div>
@@ -188,9 +198,9 @@
       </div>
 
       <div class="app" id="portal-learner">
-        <div class="app-bar"><span class="dotsbar" aria-hidden="true"><i></i><i></i><i></i></span><span class="url">nextrung.in/learner/dashboard</span><span class="meta">Sample data</span></div>
+        <div class="app-bar"><span class="dotsbar" aria-hidden="true"><i></i><i></i><i></i></span><span class="url">Your learner dashboard</span><span class="meta">Sample data</span></div>
         <div class="app-body">
-          <div class="side"><span class="on">Dashboard</span><span>My sessions</span><span>Scorecards</span><span>Question bank</span><span>Find a guide</span><span>Profile</span></div>
+          <div class="side"><span class="on">Dashboard</span><span>My sessions</span><span>Scorecards</span><span>Find a guide</span><span>Profile</span></div>
           <div class="main">
             <div class="hello"><div><div class="meta">Final-year BE · Business Analysis track</div><h3>Welcome back, Sneha</h3></div><a class="btn sm" href="#guides">Book a session</a></div>
             <div class="widgets">
@@ -198,29 +208,13 @@
                 <span class="w-h">Next session</span>
                 <h4>Mock panel · Case round</h4>
                 <p class="muted" style="font-size:.9rem">Thu 2 Oct · 6:30 pm IST · with Senior Business Analyst</p>
-                <div class="li" style="border:0;padding:0"><span class="sub">Case brief: Rising order returns</span><span class="pill wait">Prep due Wed</span></div>
-              </div>
-              <div class="w">
-                <span class="w-h">Readiness score</span>
-                <svg class="trend" viewBox="0 0 260 110" role="img" aria-label="Readiness score rose from 2.6 to 3.2 to 3.6 out of 5 across three mocks">
-                  <line x1="30" y1="20" x2="250" y2="20" stroke="var(--line)"/>
-                  <line x1="30" y1="55" x2="250" y2="55" stroke="var(--line)"/>
-                  <line x1="30" y1="90" x2="250" y2="90" stroke="var(--line)"/>
-                  <text x="4" y="24">5</text><text x="4" y="59">3.5</text><text x="4" y="94">2</text>
-                  <polygon points="50,76 140,62 230,52.7 230,90 50,90" fill="var(--mark-soft)"/>
-                  <polyline points="50,76 140,62 230,52.7" fill="none" stroke="var(--mark)" stroke-width="2.5"/>
-                  <circle cx="50" cy="76" r="4" fill="var(--mark)"/><circle cx="140" cy="62" r="4" fill="var(--mark)"/><circle cx="230" cy="52.7" r="5" fill="var(--accent)"/>
-                  <text class="val" x="42" y="70">2.6</text><text class="val" x="132" y="56">3.2</text><text class="val" x="222" y="45">3.6</text>
-                  <text x="38" y="106">Mock 1</text><text x="128" y="106">Mock 2</text><text x="216" y="106">Mock 3</text>
-                </svg>
+                <div class="li" style="border:0;padding:0"><span class="sub">Meeting link ready</span><span class="pill ok">Accepted</span></div>
               </div>
               <div class="w wide">
-                <span class="w-h">Your placement plan</span>
-                <div class="check"><span class="box done"></span>Resume reviewed</div>
-                <div class="check"><span class="box done"></span>Interview workshop attended</div>
-                <div class="check"><span class="box done"></span>Mock panels 1–3 completed</div>
-                <div class="check"><span class="box next"></span>Case round presentation <span class="pill wait">Booked</span></div>
-                <div class="check"><span class="box"></span>Final HR round practice</div>
+                <span class="w-h">Latest scorecard</span>
+                <div class="crit"><span class="name">Problem framing</span><span class="score">4 / 5</span><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+                <div class="crit"><span class="name">Stakeholder handling</span><span class="score">3 / 5</span><span class="dots"><i class="hi"></i><i class="hi"></i><i class="hi"></i><i></i><i></i></span></div>
+                <p class="muted" style="font-size:.9rem">Guide's note: restate the business impact before agreeing to a trade-off.</p>
               </div>
             </div>
           </div>
@@ -228,7 +222,7 @@
       </div>
 
       <div class="app" id="portal-pro" hidden>
-        <div class="app-bar"><span class="dotsbar" aria-hidden="true"><i></i><i></i><i></i></span><span class="url">nextrung.in/guide/dashboard</span><span class="meta">Sample data</span></div>
+        <div class="app-bar"><span class="dotsbar" aria-hidden="true"><i></i><i></i><i></i></span><span class="url">Your guide dashboard</span><span class="meta">Sample data</span></div>
         <div class="app-body">
           <div class="side"><span class="on">Dashboard</span><span>Requests</span><span>Schedule</span><span>My services</span><span>Earnings</span><span>Profile</span></div>
           <div class="main">
@@ -250,8 +244,7 @@
                 <span class="w-h">Upcoming</span>
                 <div class="list">
                   <div class="li"><div><div>Sneha · Case round</div><div class="sub">Thu 2 Oct · 6:30 pm</div></div><span class="pill ok">Confirmed</span></div>
-                  <div class="li"><div><div>Batch workshop · 40 students</div><div class="sub">Fri 3 Oct · 3:00 pm</div></div><span class="pill ok">Confirmed</span></div>
-                  <div class="li"><div><div>Rohit · Scorecard due</div><div class="sub">Session held Mon 29 Sep</div></div><span class="pill wait">Pending</span></div>
+                                    <div class="li"><div><div>Rohit · Scorecard due</div><div class="sub">Session held Mon 29 Sep</div></div><span class="pill wait">Pending</span></div>
                 </div>
               </div>
               <div class="w wide">
@@ -282,21 +275,21 @@
             <div class="plan">
               <h4>Free access</h4>
               <div class="price">₹0</div>
-              <ul class="ticks"><li>Question bank for all fields</li><li>Monthly open Q&amp;A</li><li>Browse guides</li></ul>
+              <ul class="ticks"><li>Browse verified guides</li><li>See prices and open times</li><li>Sample questions for every field</li></ul>
             </div>
             <div class="plan">
               <h4>Single session</h4>
               <div class="price">₹699+ <small>/ session</small></div>
-              <ul class="ticks"><li>Any service from any guide</li><li>Scorecard or written plan</li><li>Recording in your portal</li></ul>
+              <ul class="ticks"><li>Any service from any guide</li><li>Written scorecard after the session</li><li>Reschedule from your dashboard</li></ul>
             </div>
             <div class="plan feature">
               <span class="flag">For freshers</span>
-              <h4>Placement pack</h4>
+              <h4>Placement pack <span class="tag soon">Coming soon</span></h4>
               <div class="price">₹3,499</div>
               <ul class="ticks"><li>One workshop</li><li>Three mock panels</li><li>One case round</li><li>Resume review</li></ul>
             </div>
             <div class="plan">
-              <h4>Career switch pack</h4>
+              <h4>Career switch pack <span class="tag soon">Coming soon</span></h4>
               <div class="price">₹4,999</div>
               <ul class="ticks"><li>Roadmap session</li><li>Two follow-up check-ins</li><li>Two senior-level mocks</li><li>LinkedIn rewrite</li></ul>
             </div>
@@ -307,13 +300,13 @@
           <div class="pro-terms">
             <span class="eyebrow">Free to join</span>
             <div class="big">15%</div>
-            <p>Platform fee on each paid session. You keep the rest.</p>
-            <ul class="ticks"><li>Set your own prices and services</li><li>Choose your slots</li><li>Weekly payouts to your bank</li><li>Paid campus workshops</li><li>Ready-made scorecard templates</li></ul>
+            <p>Platform fee on each paid session once online checkout launches. You keep the rest. Until then, learners pay you directly.</p>
+            <ul class="ticks"><li>Set your own prices and services</li><li>Choose your slots</li><li>Learners pay you directly by UPI</li><li>Built-in scorecard for every session</li></ul>
             <a class="btn sm" style="align-self:flex-start" href="login.html?mode=signup&amp;role=guide">Apply to guide</a>
           </div>
         </div>
       </div>
-      <p class="fine">All prices and the platform fee are placeholders for this concept. For reference, expert-led mock interviews in India currently range from a few hundred rupees in group packages to about ₹1,200–₹3,000 for a one-hour session.</p>
+      <p class="fine">Guides set their own session prices. For reference, a one-hour mock interview with an expert in India usually costs ₹1,200–₹3,000.</p>
     </div>
   </section>
 
@@ -340,7 +333,7 @@
       <div class="sec-head">
         <span class="eyebrow">Join</span>
         <h2 id="enroll-h">Join as a learner or as a guide</h2>
-        <p class="lede">Create a free account in a minute. Learners can book straight away; guides go live after a short verification call.</p>
+        <p class="lede">Create a free account in a minute. Learners can book straight away; guides go live once our team verifies their profile.</p>
       </div>
       <div class="aud">
         <div class="aud-col">
@@ -369,8 +362,8 @@
       <details><summary>Who is this platform for?</summary><p>Students, recent graduates and working professionals who want help with interviews, a career switch, a promotion or their resume. Experienced professionals can also join as guides.</p></details>
       <details><summary>Are sessions online?</summary><p>Yes. All one-to-one sessions run on video. Campus and company workshops can also be held in person.</p></details>
       <details><summary>How is this different from AI mock interview apps?</summary><p>AI apps are useful for unlimited practice. Here, an experienced person questions you live, reacts to your answers and gives you advice based on real hiring decisions.</p></details>
-      <details><summary>How are guides verified?</summary><p>Each applicant has a short call with our team. We check their experience, their role and that they have interviewed or led people in their field.</p></details>
-      <details><summary>How do guides get paid?</summary><p>Guides set their own prices. Learners pay through the platform, and guides receive their share every week after the platform fee.</p></details>
+      <details><summary>How are guides verified?</summary><p>Our team reviews every application. We check the LinkedIn profile, the current role and that the person has interviewed or led people in their field. Only verified guides appear in the directory.</p></details>
+      <details><summary>How do guides get paid?</summary><p>Guides set their own prices. For now, learners pay the guide directly by UPI once the guide accepts the session; the guide's UPI ID appears in the learner's dashboard. Online checkout is coming next.</p></details>
       <details><summary>Do you guarantee a job?</summary><p>No. We help you prepare and show you exactly where you stand. The offer depends on you and the employer.</p></details>
     </div>
   </section>
@@ -385,8 +378,10 @@
       <a href="index.html#services">Services</a>
       <a href="index.html#plans">Pricing</a>
       <a href="index.html#faq">FAQ</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
     </nav>
-    <div class="f-legal">© 2026 NextRung · Pune, India · Sessions are online, across India</div>
+    <div class="f-legal">© 2026 NextRung · Pune, India · Sessions are online, across India<span data-contact data-contact-optional hidden></span></div>
   </div>
 </footer>
 

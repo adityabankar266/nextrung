@@ -42,6 +42,9 @@ supabase/         schema.sql, reset.sql, tests/
 1. **Create a Supabase project** at supabase.com (free tier). Region: Mumbai.
 2. **Create the database:** Supabase → SQL Editor → New query → paste all of `supabase/schema.sql` → Run. Then run each file in `supabase/migrations/` the same way, in number order.
 3. **Connect the site:** Supabase → Project Settings → API. Copy the Project URL and the `anon` `public` key into `js/config.js`. Never use the `service_role` key in the site.
+   Also in `js/config.js`:
+   - `CONTACT_EMAIL`: the support address shown in the footer, privacy notice and terms (empty hides it).
+   - `FEE_COLLECTED`: keep `false` while learners pay guides directly; set `true` once online checkout collects the 15% fee.
 4. **Set the redirect URLs:** Supabase → Authentication → URL Configuration.
    - Site URL: `https://adityabankar266.github.io/nextrung/`
    - Redirect URLs: add `https://adityabankar266.github.io/nextrung/**`
@@ -62,6 +65,9 @@ Schema changes ship as numbered files in `supabase/migrations/`. Run each new fi
 | `003_slots_and_reschedule.sql` | Guide time slots, slot-based booking, rescheduling |
 | `004_profile_photos.sql` | Profile photos (storage bucket), guide UPI payout details |
 | `005_learners_only_booking.sql` | Only learner accounts can book sessions |
+| `006_learner_payment_details.sql` | Learners see their guide's UPI ID on accepted sessions |
+
+`supabase/update_5_and_6.sql` contains updates 5 and 6 together, if you have run neither yet.
 
 ## Testing
 
@@ -83,6 +89,8 @@ They check sign-up, verification, privacy, booking rules, scorecards, reviews an
 
 ## Before a public launch
 
+- When the final domain is ready, update the `og:image` address in the `<head>` of each page (it points at the GitHub Pages address for now).
+- Have a lawyer review `privacy.html` and `terms.html`.
 - Turn on a custom SMTP sender in Supabase (the built-in email service is rate-limited and meant for testing).
 - Add a privacy policy and terms (India's DPDP Act applies to learner data).
 - Add payments (e.g. Razorpay) and booking email notifications.

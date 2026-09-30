@@ -257,6 +257,16 @@ def main():
     ok, out, _ = as_user(learner, f"select count(*) from public.contacts where user_id='{guide}';")
     expect("others cannot see payout details", out == "0", out)
 
+    print("paying the guide")
+    ok, out, err = as_user(learner, f"select upi from public.my_payment_details() where booking_id='{bid}';")
+    expect("learner sees the guide's UPI ID for a completed session", out == "rahul.d@okicici", (out, err))
+    ok, out, _ = as_user(guide2, "select count(*) from public.my_payment_details();")
+    expect("someone without sessions sees no UPI IDs", out == "0", out)
+    ok, out, _ = as_user(guide, "select count(*) from public.my_payment_details();")
+    expect("a guide does not see UPI IDs through it", out == "0", out)
+    ok, _, _ = as_user(None, "select count(*) from public.my_payment_details();")
+    expect("visitors cannot call it", not ok)
+
     print(f"\n{PASS} passed, {FAIL} failed")
     psql(f"drop database {DB};", db="postgres")
     sys.exit(1 if FAIL else 0)

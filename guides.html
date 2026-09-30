@@ -12,6 +12,16 @@
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/theme.css">
 <meta name="theme-color" content="#0B2545">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NextRung">
+<meta property="og:title" content="NextRung · Career guidance from people one rung ahead">
+<meta property="og:description" content="Book one-to-one sessions with verified professionals in your field. Mock panels, career roadmaps and resume reviews, with a written scorecard after every session.">
+<meta property="og:image" content="https://adityabankar266.github.io/nextrung/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
 <header class="top">
@@ -50,8 +60,10 @@
       <a href="index.html#services">Services</a>
       <a href="index.html#plans">Pricing</a>
       <a href="index.html#faq">FAQ</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
     </nav>
-    <div class="f-legal">© 2026 NextRung · Pune, India · Sessions are online, across India</div>
+    <div class="f-legal">© 2026 NextRung · Pune, India · Sessions are online, across India<span data-contact data-contact-optional hidden></span></div>
   </div>
 </footer>
 
@@ -128,8 +140,10 @@
     if (!services.length) {
       bookHtml = '<div class="empty">This guide has not listed any services yet.</div>';
     } else if (!me) {
-      bookHtml = `<div class="notice">Sign in or create a free account to request a session.</div>
-        <a class="btn" href="${NR.loginUrl()}">Sign in to book</a>`;
+      bookHtml = `${slots.length ? `<p class="bk-meta"><b>Next open times (IST):</b> ${slots.slice(0, 3).map(x => esc(NR.istDay(x.starts_at) + ', ' + NR.istTime(x.starts_at))).join(' · ')}</p>` : ''}
+        <div class="notice">Create a free learner account to request a session. It takes a minute, and you come straight back here.</div>
+        <div class="bk-actions"><a class="btn" href="${NR.loginUrl('mode=signup&role=learner')}">Create free account</a>
+        <a class="btn ghost" href="${NR.loginUrl()}">I have an account</a></div>`;
     } else if (me.id === id) {
       bookHtml = '<div class="notice">This is your own profile.</div>';
     } else if (myRole !== 'learner') {

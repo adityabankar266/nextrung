@@ -163,3 +163,66 @@ footer.site-foot .f-legal{flex-basis:100%;border-top:1px solid rgba(255,255,255,
 /* role-based visibility (the database enforces the same rules) */
 :root[data-role] .guest-only{display:none!important}
 :root[data-role="guide"] .learner-only,:root[data-role="admin"] .learner-only{display:none!important}
+
+/* phone menu: section links open as a panel under the header */
+.menu-btn{display:none}
+@media (max-width:900px){
+  header.top .wrap{position:relative}
+  .menu-btn{display:inline-flex;flex-direction:column;justify-content:center;gap:4px;flex:none;width:40px;height:36px;padding:0 10px;margin-left:6px;border:1px solid rgba(255,255,255,.45);border-radius:8px;background:transparent;cursor:pointer}
+  .menu-btn span{display:block;height:2px;border-radius:2px;background:#FFFFFF}
+  header.top.menu-open nav.links{display:flex;flex-direction:column;gap:0;position:absolute;left:0;right:0;top:calc(100% + 1px);background:var(--navy);padding:4px 20px 12px;border-top:1px solid rgba(255,255,255,.12);box-shadow:0 16px 24px rgba(0,0,0,.25);z-index:20}
+  header.top.menu-open nav.links a{padding:13px 0;font-size:1rem;color:#FFFFFF;border-bottom:1px solid rgba(255,255,255,.08)}
+  header.top.menu-open nav.links a:last-child{border-bottom:0}
+}
+@media (max-width:420px){ header.top .nav-cta .dash-btn{display:none} }
+
+/* dashboard tabs: on phones every tab stays visible, wrapping onto a second row */
+@media (max-width:640px){
+  .dash-tabs{flex-wrap:wrap;overflow:visible;border-bottom:0;gap:8px}
+  .dash-tabs button{border:1px solid var(--line);border-radius:999px;padding:8px 14px;background:var(--card)}
+  .dash-tabs button[aria-selected="true"]{background:var(--navy);border-color:var(--navy);color:#FFFFFF}
+}
+
+/* pop-ups fill the screen on phones, so long forms scroll as a page */
+@media (max-width:600px){
+  dialog.modal{width:100%;max-width:100%;height:100%;max-height:100%;margin:0;border-radius:0}
+  dialog.modal .modal-body{max-height:100%;height:100%;padding:20px 16px calc(24px + env(safe-area-inset-bottom,0px))}
+}
+
+/* meeting link on its own row */
+.link-row{display:flex;flex-direction:column;gap:6px}
+.link-row label{font-size:.82rem;font-weight:600;color:var(--muted)}
+.link-row .bk-actions input{flex:1 1 220px}
+
+/* start session opens 15 minutes before the start */
+.btn:disabled{cursor:not-allowed}
+.start-hint{font-size:.8rem;color:var(--muted)}
+
+/* updates since the last visit */
+.updates{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+.updates ul{margin:0;padding-left:18px}
+.updates .linkish{align-self:flex-start}
+
+/* paying the guide */
+.pay-to{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:.88rem;background:var(--mark-soft);border-radius:8px;padding:8px 12px}
+.pay-to code{font-family:var(--body);font-weight:600;color:var(--ink)}
+
+/* coming-soon labels on the home page */
+.tag.soon{background:var(--attention-soft);color:var(--attention);margin-left:6px;vertical-align:middle}
+.plan .tag.soon{margin-left:0}
+
+/* sign-up consent */
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;color:var(--muted)}
+.consent input{margin-top:3px;flex:none;width:16px;height:16px}
+
+/* legal pages */
+.legal{max-width:760px}
+.legal h2{font-size:1.25rem;margin-top:28px}
+.legal p,.legal li{color:var(--ink);line-height:1.7}
+.legal .updated{color:var(--muted);font-size:.9rem}
+@media (max-width:640px) and (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .dash-tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent)}
+}
+@media (max-width:640px){ :root[data-theme="dark"] .dash-tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent)} }
+.legal h1{margin:6px 0 6px}
+.legal .updated{margin:0 0 14px}

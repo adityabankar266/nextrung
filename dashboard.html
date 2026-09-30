@@ -11,6 +11,16 @@
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/theme.css">
 <meta name="theme-color" content="#0B2545">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NextRung">
+<meta property="og:title" content="NextRung · Career guidance from people one rung ahead">
+<meta property="og:description" content="Book one-to-one sessions with verified professionals in your field. Mock panels, career roadmaps and resume reviews, with a written scorecard after every session.">
+<meta property="og:image" content="https://adityabankar266.github.io/nextrung/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
 <header class="top">
@@ -36,8 +46,10 @@
       <a href="index.html#services">Services</a>
       <a href="index.html#plans">Pricing</a>
       <a href="index.html#faq">FAQ</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
     </nav>
-    <div class="f-legal">© 2026 NextRung · Pune, India · Sessions are online, across India</div>
+    <div class="f-legal">© 2026 NextRung · Pune, India · Sessions are online, across India<span data-contact data-contact-optional hidden></span></div>
   </div>
 </footer>
 
@@ -131,12 +143,12 @@
       if (await run(sb.auth.updateUser({ password: a }), 'Password changed.')) pw.reset();
     };
   }
-  const PAY_STATUS = { requested: ['Not due yet', 'st-requested'], accepted: ['Pay guide directly', 'st-accepted'], completed: ['Pay guide directly', 'st-completed'], declined: ['No charge', 'st-cancelled'], cancelled: ['No charge', 'st-cancelled'] };
+  const PAY_STATUS = { requested: ['Not due yet', 'st-requested'], accepted: ['Pay guide directly', 'st-accepted'], completed: ['Session done', 'st-completed'], declined: ['No charge', 'st-cancelled'], cancelled: ['No charge', 'st-cancelled'] };
   function paymentOptionsCard(forGuide) {
     return `<div class="card">
       <h3>Payment options</h3>
       <div class="pay-opt"><span class="st st-accepted">Available now</span>
-        <p>${forGuide ? 'Learners pay you directly by UPI or bank transfer after you confirm a session. Share your UPI ID in the session note or meeting.' : 'Pay your guide directly by UPI or bank transfer after they confirm your session.'}</p></div>
+        <p>${forGuide ? 'Learners pay you directly by UPI after you accept a session. Add your UPI ID under Payout details and learners see it on the accepted session.' : "Pay your guide directly by UPI after they accept your session. Their UPI ID appears on the session once it's accepted."}</p></div>
       <div class="pay-opt"><span class="st st-requested">Coming soon</span>
         <p>${forGuide ? 'Secure online checkout. Learners pay NextRung at booking and we send your share to your UPI ID every week.' : 'Secure online checkout at booking: UPI, cards, net banking and wallets, with receipts saved here.'}</p></div>
     </div>`;
@@ -151,6 +163,50 @@
     return `<div class="resched-note">↻ Rescheduled by ${by}.${wait}</div>`;
   }
   const canMove = b => ['requested', 'accepted'].includes(b.status) && new Date(b.scheduled_at).getTime() > Date.now();
+
+  // "Start session" opens 15 minutes before the start and stays open until an hour after the planned end.
+  const START_EARLY_MIN = 15;
+  function startButton(b) {
+    const t = new Date(b.scheduled_at).getTime(), now = Date.now();
+    const open = now >= t - START_EARLY_MIN * 60e3 && now <= t + (b.duration_min + 60) * 60e3;
+    return open
+      ? `<button class="btn xs" type="button" data-act="start" data-id="${b.id}">▶ Start session</button>`
+      : now < t ? `<button class="btn xs" type="button" disabled title="Opens ${START_EARLY_MIN} minutes before the start">▶ Start session</button><span class="start-hint">Opens ${START_EARLY_MIN} min before the start</span>` : '';
+  }
+
+  // What changed since this person last opened the dashboard on this device.
+  let updates = null;
+  function computeUpdates(bookings, viewer) {
+    const key = 'nr-seen-' + me.id;
+    let seen = null;
+    try { seen = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) {}
+    const sig = b => b.status + '|' + b.scheduled_at;
+    const now = {};
+    bookings.forEach(b => { now[b.id] = sig(b); });
+    try { localStorage.setItem(key, JSON.stringify(now)); } catch (e) {}
+    if (!seen) return [];
+    const out = [];
+    bookings.forEach(b => {
+      const before = seen[b.id];
+      if (before === now[b.id]) return;
+      const [oldStatus, oldTime] = before ? before.split('|') : [null, null];
+      const what = `${esc(b.service_title)} on ${NR.when(b.scheduled_at)}`;
+      const other = esc(viewer === 'learner' ? b.guide_name : b.learner_name);
+      if (!before) { if (viewer === 'guide' && b.status === 'requested') out.push(`New request from ${other}: ${what}.`); return; }
+      if (oldTime && oldTime !== b.scheduled_at && ['requested', 'accepted'].includes(b.status)) { out.push(`${esc(b.service_title)} with ${other} moved to ${NR.when(b.scheduled_at)}.`); return; }
+      if (oldStatus === b.status) return;
+      const msg = viewer === 'learner'
+        ? { accepted: `${other} accepted ${what}.`, declined: `${other} could not take ${what}.`, cancelled: `${what} was cancelled.`, completed: `${what} is complete. You can rate it now.` }[b.status]
+        : { cancelled: `${other} cancelled ${what}.`, requested: `${other} asked to move a session: ${what}.`, completed: `${what} is marked completed.` }[b.status];
+      if (msg) out.push(msg);
+    });
+    return out;
+  }
+  function updatesHtml() {
+    return updates && updates.length ? `<div class="notice updates" id="updates" role="status"><strong>Since your last visit</strong>
+      <ul>${updates.map(u => `<li>${u}</li>`).join('')}</ul>
+      <button class="linkish" type="button" data-act="dismiss-updates">Dismiss</button></div>` : '';
+  }
 
   // Move a session to another free slot of the same guide.
   async function rescheduleBox(b, who, viewer, after) {
@@ -242,11 +298,17 @@
   // =====================================================================
   // LEARNER
   // =====================================================================
+  function payTo(b) {
+    if (!['accepted', 'completed'].includes(b.status)) return '';
+    return b.pay_upi
+      ? `<div class="pay-to">Pay ${NR.inr(b.price_inr)} by UPI to <code>${esc(b.pay_upi)}</code><button class="btn ghost xs" type="button" data-act="copy-upi" data-upi="${esc(b.pay_upi)}">Copy</button></div>`
+      : `<div class="pay-to">Pay ${NR.inr(b.price_inr)} to your guide directly. They haven't added a UPI ID yet, so ask them in the session.</div>`;
+  }
   function learnerPlanHtml(bookings) {
     const done = bookings.filter(b => b.status === 'completed');
     const booked = bookings.filter(b => ['requested', 'accepted', 'completed'].includes(b.status));
     const PACKS = [
-      ['Single session', 'Any service from any guide, with scorecard and recording', 'From ₹699'],
+      ['Single session', 'Any service from any guide, with a written scorecard', 'From ₹699', true],
       ['Placement pack', 'One workshop, three mock panels, one case round and a resume review', '₹3,499'],
       ['Career switch pack', 'Roadmap session, two check-ins, two senior mocks and a LinkedIn rewrite', '₹4,999']];
     const history = bookings.slice().sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at));
@@ -262,7 +324,8 @@
           ${history.length ? `<div class="pay-list">${history.map(b => `
             <div class="pay-row"><div><div class="bk-title" style="font-size:.95rem">${esc(b.service_title)}</div>
               <div class="bk-meta">${esc(b.guide_name)} · ${NR.when(b.scheduled_at)}</div></div>
-              <div class="pay-amt"><div class="g-price">${NR.inr(b.price_inr)}</div><span class="st ${PAY_STATUS[b.status][1]}">${PAY_STATUS[b.status][0]}</span></div></div>`).join('')}</div>`
+              <div class="pay-amt"><div class="g-price">${NR.inr(b.price_inr)}</div><span class="st ${PAY_STATUS[b.status][1]}">${PAY_STATUS[b.status][0]}</span></div></div>
+            ${b.status === 'accepted' ? payTo(b) : ''}`).join('')}</div>`
           : '<div class="empty">Your sessions and what you owe for each will appear here.</div>'}
         </div>
       </div>
@@ -270,19 +333,23 @@
         ${paymentOptionsCard(false)}
         <div class="card">
           <h3>Packs</h3>
-          ${PACKS.map(([t, d, pr]) => `<div class="pack"><div><div class="bk-title" style="font-size:.95rem">${t}</div><div class="bk-meta">${d}</div></div>
-            <div class="pay-amt"><div class="g-price">${pr}</div><span class="tag">Coming soon</span></div></div>`).join('')}
+          ${PACKS.map(([t, d, pr, live]) => `<div class="pack"><div><div class="bk-title" style="font-size:.95rem">${t}</div><div class="bk-meta">${d}</div></div>
+            <div class="pay-amt"><div class="g-price">${pr}</div>${live ? '<span class="st st-accepted">Available now</span>' : '<span class="tag">Coming soon</span>'}</div></div>`).join('')}
         </div>
       </div>
     </div>`;
   }
 
   async function learnerView() {
-    const [bookings, lp, ct] = await Promise.all([
+    const [bookings, lp, ct, pay] = await Promise.all([
       loadBookings('learner_id'),
       sb.from('learner_profiles').select('*').eq('user_id', me.id).maybeSingle(),
-      sb.from('contacts').select('*').eq('user_id', me.id).maybeSingle()
+      sb.from('contacts').select('*').eq('user_id', me.id).maybeSingle(),
+      sb.rpc('my_payment_details').then(r => r, () => ({ data: [] }))
     ]);
+    const upiFor = Object.fromEntries(((pay && pay.data) || []).map(r => [r.booking_id, r.upi]));
+    bookings.forEach(b => { b.pay_upi = upiFor[b.id] || ''; });
+    if (updates === null) updates = computeUpdates(bookings, 'learner');
     const upcoming = bookings.filter(isUpcoming);
     const past = bookings.filter(b => !isUpcoming(b)).reverse();
     const cards = bookings.filter(b => b.scorecard);
@@ -302,8 +369,9 @@
         ${b.status === 'requested' && !b.last_rescheduled_by ? '<div class="bk-meta">Waiting for the guide to confirm.</div>' : ''}
         ${rescheduleNote(b, 'learner')}
         ${b.guide_note ? `<div class="bk-note"><strong>Note from guide</strong>\n${esc(b.guide_note)}</div>` : ''}
+        ${b.status === 'accepted' ? payTo(b) : ''}
         <div class="bk-actions">
-          ${b.status === 'accepted' ? `<button class="btn xs" type="button" data-act="start" data-id="${b.id}">▶ Start session</button>` : ''}
+          ${b.status === 'accepted' ? startButton(b) : ''}
           ${b.scorecard ? `<button class="btn xs" type="button" data-act="view-card" data-id="${b.id}">View scorecard</button>` : ''}
           ${b.status === 'completed' && !b.review ? `<button class="btn xs" type="button" data-act="review" data-id="${b.id}">Rate this session</button>` : ''}
           ${b.review ? `<span class="rating">You rated ${'★'.repeat(b.review.rating)}</span>` : ''}
@@ -315,6 +383,7 @@
     root.innerHTML = `
       ${whoHead(esc([info.career_stage, info.field].filter(Boolean).join(' · ') || 'Learner'),
         `<a class="btn" href="guides.html${info.field ? '?field=' + encodeURIComponent(info.field) : ''}">Book a session</a>`)}
+      ${updatesHtml()}
       ${tabs([{ id: 'sessions', label: 'Sessions', badge: upcoming.length }, { id: 'scorecards', label: 'Scorecards', badge: cards.length }, { id: 'profile', label: 'Profile' }, { id: 'plan', label: 'Plan & payments' }], tab)}
       <div data-panel="sessions" ${tab !== 'sessions' ? 'hidden' : ''}>
         <div class="grid-main">
@@ -369,6 +438,8 @@
       if (a.dataset.act === 'review') reviewBox(b);
       if (a.dataset.act === 'start') startSession(b, b.guide_name);
       if (a.dataset.act === 'resched') rescheduleBox(b, b.guide_name, 'learner', () => { activeTab = 'sessions'; learnerView(); });
+      if (a.dataset.act === 'copy-upi') copyText(a.dataset.upi, 'UPI ID copied.');
+      if (a.dataset.act === 'dismiss-updates') dismissUpdates();
     };
     document.getElementById('learner-profile').onsubmit = async e => {
       e.preventDefault();
@@ -408,6 +479,12 @@
     };
   }
 
+  function dismissUpdates() { updates = []; const u = document.getElementById('updates'); if (u) u.remove(); }
+  async function copyText(text, okMsg) {
+    try { await navigator.clipboard.writeText(text); NR.toast(okMsg); }
+    catch (e) { NR.toast('Copy failed. The UPI ID is ' + text + '.', true); }
+  }
+
   function confirmBox(title, text, action, onYes) {
     openModal(`
       <div class="modal-head"><h3>${esc(title)}</h3><button class="x" data-close aria-label="Close">×</button></div>
@@ -438,7 +515,10 @@
     const past = bookings.filter(b => ['completed', 'declined', 'cancelled'].includes(b.status) || (b.status === 'requested' && new Date(b.scheduled_at) <= new Date())).reverse();
     const monthKey = d => new Intl.DateTimeFormat('en-IN', { year: 'numeric', month: '2-digit', timeZone: 'Asia/Kolkata' }).format(new Date(d));
     const thisMonth = bookings.filter(b => b.status === 'completed' && monthKey(b.scheduled_at) === monthKey(Date.now()));
-    const earnings = Math.round(thisMonth.reduce((s, b) => s + b.price_inr, 0) * (1 - NR.PLATFORM_FEE));
+    // Until online checkout collects the platform fee, guides receive the full price from learners.
+    const keep = x => NR.FEE_COLLECTED ? Math.round(x * (1 - NR.PLATFORM_FEE)) : x;
+    const earnings = keep(thisMonth.reduce((s, b) => s + b.price_inr, 0));
+    if (updates === null) updates = computeUpdates(bookings, 'guide');
     const ratings = (rv.data || []).map(r => r.rating);
     const avg = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : '–';
     const tab = activeTab || (requests.length ? 'requests' : 'upcoming');
@@ -458,7 +538,7 @@
           ['Service', esc(b.service_title)],
           ['Date & time', NR.when(b.scheduled_at)],
           ['Duration', b.duration_min + ' min'],
-          ['Price', NR.inr(b.price_inr) + ` <span class="muted">(you receive ${NR.inr(Math.round(b.price_inr * (1 - NR.PLATFORM_FEE)))})</span>`],
+          ['Price', NR.inr(b.price_inr) + ` <span class="muted">(${NR.FEE_COLLECTED ? 'you receive ' + NR.inr(keep(b.price_inr)) : 'paid to you directly'})</span>`],
           ['Requested on', NR.when(b.created_at)]
         ])}
         ${rescheduleNote(b, 'guide')}
@@ -468,14 +548,16 @@
 
     function guidePlanHtml() {
       const done = bookings.filter(b => b.status === 'completed').sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at));
-      const net = x => Math.round(x * (1 - NR.PLATFORM_FEE));
+      const net = keep;
       const allGross = done.reduce((t, b) => t + b.price_inr, 0);
       const upi = (ct.data || {}).payout_upi || '';
       return `<div class="grid-main">
         <div class="stack">
           <div class="card">
             <div class="day-head"><h3>Your plan</h3>${g.is_verified ? '<span class="st st-accepted">Active</span>' : g.is_rejected ? '<span class="st st-declined">Not approved</span>' : '<span class="st st-requested">Under review</span>'}</div>
-            <div><div class="bk-title">Guide · free to join</div><div class="bk-meta">You set your own prices. NextRung keeps ${Math.round(NR.PLATFORM_FEE * 100)}% of each paid session; you keep the rest.</div></div>
+            <div><div class="bk-title">Guide · free to join</div><div class="bk-meta">${NR.FEE_COLLECTED
+              ? `You set your own prices. NextRung keeps ${Math.round(NR.PLATFORM_FEE * 100)}% of each paid session; you keep the rest.`
+              : `You set your own prices. For now, learners pay you the full price directly. Once online checkout launches, NextRung keeps ${Math.round(NR.PLATFORM_FEE * 100)}% of each session.`}</div></div>
             ${details([['Sessions completed', String(done.length)], ['Earned this month', NR.inr(earnings)], ['Earned in total', NR.inr(net(allGross))]])}
           </div>
           <div class="card">
@@ -483,7 +565,7 @@
             ${done.length ? `<div class="pay-list">${done.map(b => `
               <div class="pay-row"><div><div class="bk-title" style="font-size:.95rem">${esc(b.service_title)}</div>
                 <div class="bk-meta">${esc(b.learner_name)} · ${NR.when(b.scheduled_at)}</div>
-                <div class="bk-meta">${NR.inr(b.price_inr)} − ${NR.inr(b.price_inr - net(b.price_inr))} fee</div></div>
+                <div class="bk-meta">${NR.FEE_COLLECTED ? `${NR.inr(b.price_inr)} − ${NR.inr(b.price_inr - net(b.price_inr))} fee` : 'Paid to you directly by the learner'}</div></div>
                 <div class="pay-amt"><div class="g-price">${NR.inr(net(b.price_inr))}</div><span class="muted" style="font-size:.78rem">you receive</span></div></div>`).join('')}</div>`
             : '<div class="empty">Completed sessions and what you earned from each will appear here.</div>'}
           </div>
@@ -492,7 +574,7 @@
           <form class="card" id="upi-form" novalidate>
             <h3>Payout details</h3>
             <div class="field"><label for="upi-id">UPI ID</label><input id="upi-id" value="${esc(upi)}" placeholder="name@okicici" autocomplete="off"></div>
-            <p class="demo-note">Private to you and the NextRung team. Used for weekly payouts once online payments launch.</p>
+            <p class="demo-note">Shown only to learners whose session you have accepted, so they can pay you, and to the NextRung team.</p>
             <button class="btn ghost" type="submit" style="align-self:flex-start">Save payout details</button>
           </form>
           ${paymentOptionsCard(true)}
@@ -547,8 +629,9 @@
       <div class="stats" style="margin-bottom:22px">
         <div class="stat"><div class="n">${thisMonth.length}</div><div class="l">Sessions completed this month</div></div>
         <div class="stat"><div class="n">${avg}</div><div class="l">Average rating (${ratings.length} review${ratings.length === 1 ? '' : 's'})</div></div>
-        <div class="stat"><div class="n">${NR.inr(earnings)}</div><div class="l">Earnings this month, after ${Math.round(NR.PLATFORM_FEE * 100)}% fee</div></div>
+        <div class="stat"><div class="n">${NR.inr(earnings)}</div><div class="l">${NR.FEE_COLLECTED ? `Earnings this month, after ${Math.round(NR.PLATFORM_FEE * 100)}% fee` : 'Earnings this month'}</div></div>
       </div>
+      ${updatesHtml()}
       ${tabs([
         { id: 'requests', label: 'Requests', badge: requests.length },
         { id: 'upcoming', label: 'Upcoming', badge: upcoming.length },
@@ -560,8 +643,9 @@
 
       <div data-panel="requests" class="stack" ${tab !== 'requests' ? 'hidden' : ''}>
         ${requests.map(b => card(b, `
+          <div class="link-row"><label for="ml-${b.id}">Meeting link (optional, we'll create one if empty)</label>
+            <div class="bk-actions"><input type="url" placeholder="https://…" id="ml-${b.id}"></div></div>
           <div class="bk-actions">
-            <input type="url" placeholder="Meeting link (optional, we'll create one)" id="ml-${b.id}" aria-label="Meeting link">
             <button class="btn xs" type="button" data-act="accept" data-id="${b.id}">Accept</button>
             <button class="btn ghost xs" type="button" data-act="decline" data-id="${b.id}">Reject</button>
             <button class="btn ghost xs" type="button" data-act="resched" data-id="${b.id}">Reschedule</button>
@@ -570,12 +654,11 @@
 
       <div data-panel="upcoming" class="stack" ${tab !== 'upcoming' ? 'hidden' : ''}>
         ${upcoming.map(b => card(b, `
+          <div class="link-row"><label for="ml-${b.id}">Meeting link</label>
+            <div class="bk-actions"><input type="url" value="${esc(b.meeting_link || '')}" placeholder="https://…" id="ml-${b.id}">
+            <button class="btn ghost xs" type="button" data-act="save-link" data-id="${b.id}">Save link</button></div></div>
           <div class="bk-actions">
-            <input type="url" value="${esc(b.meeting_link || '')}" placeholder="Meeting link (https://…)" id="ml-${b.id}" aria-label="Meeting link">
-            <button class="btn ghost xs" type="button" data-act="save-link" data-id="${b.id}">Save link</button>
-          </div>
-          <div class="bk-actions">
-            <button class="btn xs" type="button" data-act="start" data-id="${b.id}">▶ Start session</button>
+            ${startButton(b)}
             <button class="btn ghost xs" type="button" data-act="scorecard" data-id="${b.id}">${b.scorecard ? 'Edit scorecard' : 'Write scorecard'}</button>
             ${new Date(b.scheduled_at) <= new Date() ? `<button class="btn xs" type="button" data-act="complete" data-id="${b.id}">Mark completed</button>` : ''}
             ${canMove(b) ? `<button class="btn ghost xs" type="button" data-act="resched" data-id="${b.id}">Reschedule</button>` : ''}
@@ -710,6 +793,7 @@
           });
           break;
         case 'scorecard': scorecardEditor(b); break;
+        case 'dismiss-updates': dismissUpdates(); break;
         case 'edit-svc': serviceEditor(svcById[id]); break;
         case 'toggle-svc': {
           const s = svcById[id];

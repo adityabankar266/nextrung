@@ -11,6 +11,16 @@
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/theme.css">
 <meta name="theme-color" content="#0B2545">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NextRung">
+<meta property="og:title" content="NextRung · Career guidance from people one rung ahead">
+<meta property="og:description" content="Book one-to-one sessions with verified professionals in your field. Mock panels, career roadmaps and resume reviews, with a written scorecard after every session.">
+<meta property="og:image" content="https://adityabankar266.github.io/nextrung/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
 <header class="top">
@@ -79,16 +89,16 @@
         <fieldset class="field" style="border:0;margin:0;padding:0"><legend>Services you want to offer</legend>
           <div class="checks">
             <label><input type="checkbox" name="svc" value="Mock panels" checked>Mock panels</label>
-            <label><input type="checkbox" name="svc" value="Workshops">Workshops</label>
-            <label><input type="checkbox" name="svc" value="Career roadmap">Career roadmap</label>
+                        <label><input type="checkbox" name="svc" value="Career roadmap">Career roadmap</label>
             <label><input type="checkbox" name="svc" value="Resume review">Resume review</label>
             <label><input type="checkbox" name="svc" value="Leadership coaching">Leadership coaching</label>
           </div>
         </fieldset>
         <div class="field"><label for="su-price">Starting price per session (₹)</label><input id="su-price" type="number" min="0" max="100000" step="50" inputmode="numeric" placeholder="e.g. 999"></div>
-        <p class="demo-note">You can change services and prices later. Your profile goes live after a short verification call.</p>
+        <p class="demo-note">You can change services and prices later. Your profile goes live once our team has verified it, usually within two working days.</p>
       </div>
 
+      <label class="consent"><input type="checkbox" id="su-consent"><span>I agree to the <a href="terms.html" target="_blank" rel="noopener">terms of use</a> and the <a href="privacy.html" target="_blank" rel="noopener">privacy notice</a>, and I am 18 or over.</span></label>
       <button class="btn" type="submit">Create account</button>
       <div class="ok" id="msg-signup" hidden></div>
     </form>
@@ -122,8 +132,10 @@
       <a href="index.html#services">Services</a>
       <a href="index.html#plans">Pricing</a>
       <a href="index.html#faq">FAQ</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
     </nav>
-    <div class="f-legal">© 2026 NextRung · Pune, India · Sessions are online, across India</div>
+    <div class="f-legal">© 2026 NextRung · Pune, India · Sessions are online, across India<span data-contact data-contact-optional hidden></span></div>
   </div>
 </footer>
 
@@ -236,14 +248,16 @@
       meta.price_inr = price;
     }
 
+    if (!$('su-consent').checked) return say('msg-signup', 'Please agree to the terms and privacy notice to continue.', true);
     busy(forms.signup, true);
+    // after confirming their email, people land back where they started (for example, the guide they wanted to book)
     const { data, error } = await NR.sb.auth.signUp({
       email, password,
-      options: { data: meta, emailRedirectTo: new URL('dashboard.html', location.href).href }
+      options: { data: meta, emailRedirectTo: new URL(safeNext, location.href).href }
     });
     busy(forms.signup, false);
     if (error) return say('msg-signup', NR.explain(error), true);
-    if (data.session) return location.replace('dashboard.html');
+    if (data.session) return location.replace(safeNext);
     // Supabase returns a user with no identities when the email is already registered
     if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
       return say('msg-signup', 'An account with this email already exists. Sign in instead.', true);
