@@ -464,11 +464,13 @@
       <div class="modal-head"><h3>Rate your session</h3><button class="x" data-close aria-label="Close">×</button></div>
       <p class="muted">${esc(b.service_title)} with ${esc(b.guide_name)}</p>
       <div class="stars" role="radiogroup" aria-label="Rating">${[1,2,3,4,5].map(i => `<button type="button" data-star="${i}" aria-label="${i} star${i > 1 ? 's' : ''}">★</button>`).join('')}</div>
+      <p class="stars-hint" id="rv-hint" aria-live="polite">Tap a star to rate</p>
       <div class="field"><label for="rv-comment">Comment (shown publicly, optional)</label><textarea id="rv-comment" maxlength="1000"></textarea></div>
       <button class="btn" type="button" id="rv-save">Submit rating</button>`);
     modalBody.querySelectorAll('[data-star]').forEach(s => s.onclick = () => {
       rating = Number(s.dataset.star);
       modalBody.querySelectorAll('[data-star]').forEach(x => x.classList.toggle('on', Number(x.dataset.star) <= rating));
+      document.getElementById('rv-hint').textContent = `${rating} out of 5 · ${['Poor', 'Fair', 'Good', 'Very good', 'Excellent'][rating - 1]}`;
     });
     document.getElementById('rv-save').onclick = async () => {
       if (!rating) return NR.toast('Choose a star rating.', true);

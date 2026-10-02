@@ -133,6 +133,9 @@
     ]);
     const services = svc.data || [];
     const reviews = rev.data || [];
+    // average comes from the directory row when present, otherwise from the latest reviews
+    const reviewCount = Number(g.review_count) || reviews.length;
+    const avgRating = g.rating != null ? g.rating : (reviews.reduce((t, r) => t + r.rating, 0) / (reviews.length || 1)).toFixed(1);
     const slots = sl.data || [];
     const li = NR.safeUrl(g.linkedin_url);
 
@@ -172,7 +175,8 @@
     body.innerHTML = `
       <div class="modal-head">
         <div class="g-top">${NR.avatar(g.full_name, g.avatar_url, 64)}
-          <div><h3 id="gd-name">${esc(g.full_name)} <span class="verified" title="Verified guide">✓</span></h3><div class="meta">${esc(g.headline || '')}</div></div></div>
+          <div><h3 id="gd-name">${esc(g.full_name)} <span class="verified" title="Verified guide">✓</span></h3><div class="meta">${esc(g.headline || '')}</div>
+            <div class="g-rating">${reviewCount ? `<span class="rating">★ ${esc(avgRating)}</span> · ${reviewCount} rating${reviewCount > 1 ? 's' : ''}` : 'No ratings yet'}</div></div></div>
         <button class="x" type="button" aria-label="Close" data-close>×</button>
       </div>
       <div class="g-detail">

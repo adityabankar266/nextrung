@@ -227,6 +227,13 @@ footer.site-foot .f-legal{flex-basis:100%;border-top:1px solid rgba(255,255,255,
 .legal h1{margin:6px 0 6px}
 .legal .updated{margin:0 0 14px}
 
+/* rating stars: grey outline until chosen, amber once chosen (visible in light and dark) */
+.stars{gap:6px}
+.stars button{font-size:2.2rem;padding:4px;color:transparent;-webkit-text-stroke:1.5px var(--muted);border-radius:8px}
+.stars button.on{color:#F59E0B;-webkit-text-stroke:1.5px #F59E0B}
+.stars-hint{font-size:.88rem;color:var(--muted);margin-top:-6px}
+.g-rating{font-size:.88rem;color:var(--muted);margin-top:4px}
+
 /* admin: learners list */
 .stat-link{font:inherit;text-align:left;cursor:pointer;color:inherit;background:var(--card)}
 .stat-link:hover{border-color:var(--accent)}
