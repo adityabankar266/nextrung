@@ -148,7 +148,7 @@
     return `<div class="card">
       <h3>Payment options</h3>
       <div class="pay-opt"><span class="st st-accepted">Available now</span>
-        <p>${forGuide ? 'Learners pay you directly by UPI after you accept a session. Add your UPI ID under Payout details and learners see it on the accepted session.' : "Pay your guide directly by UPI after they accept your session. Their UPI ID appears on the session once it's accepted."}</p></div>
+        <p>${forGuide ? 'Learners pay you directly by UPI after you accept a session. Add your UPI ID under Payout details and learners see it on the accepted session.' : "Online payment is being added. Until then, your guide shares payment details with you directly."}</p></div>
       <div class="pay-opt"><span class="st st-requested">Coming soon</span>
         <p>${forGuide ? 'Secure online checkout. Learners pay NextRung at booking and we send your share to your UPI ID every week.' : 'Secure online checkout at booking: UPI, cards, net banking and wallets, with receipts saved here.'}</p></div>
     </div>`;
@@ -325,8 +325,7 @@
           ${history.length ? `<div class="pay-list">${history.map(b => `
             <div class="pay-row"><div><div class="bk-title" style="font-size:.95rem">${esc(b.service_title)}</div>
               <div class="bk-meta">${esc(b.guide_name)} · ${NR.when(b.scheduled_at)}</div></div>
-              <div class="pay-amt"><div class="g-price">${NR.inr(b.price_inr)}</div><span class="st ${PAY_STATUS[b.status][1]}">${PAY_STATUS[b.status][0]}</span></div></div>
-            ${b.status === 'accepted' ? payTo(b) : ''}`).join('')}</div>`
+              <div class="pay-amt"><div class="g-price">${NR.inr(b.price_inr)}</div><span class="st ${PAY_STATUS[b.status][1]}">${PAY_STATUS[b.status][0]}</span></div></div>`).join('')}</div>`
           : '<div class="empty">Your sessions and what you owe for each will appear here.</div>'}
         </div>
       </div>
@@ -362,7 +361,7 @@
         <div class="bk-top">
           <div class="who-head sm">${NR.avatar(b.guide_name, b.guide_avatar, 40)}<div><div class="bk-title">${esc(b.service_title)}</div>
             <div class="bk-meta">with ${esc(b.guide_name)}${b.guide_headline ? ' · ' + esc(b.guide_headline) : ''}</div>
-            <div class="bk-meta">${NR.when(b.scheduled_at)} · ${b.duration_min} min · ${NR.inr(b.price_inr)}</div></div></div>
+            <div class="bk-meta">${NR.when(b.scheduled_at)} · ${b.duration_min} min</div></div></div>
           ${status(b.status)}
         </div>
         ${b.status === 'accepted' && NR.safeUrl(b.meeting_link) ? `<div>Meeting link: <a class="meet" href="${esc(NR.safeUrl(b.meeting_link))}" target="_blank" rel="noopener">${esc(b.meeting_link)}</a></div>` : ''}
@@ -370,7 +369,6 @@
         ${b.status === 'requested' && !b.last_rescheduled_by ? '<div class="bk-meta">Waiting for the guide to confirm.</div>' : ''}
         ${rescheduleNote(b, 'learner')}
         ${b.guide_note ? `<div class="bk-note"><strong>Note from guide</strong>\n${esc(b.guide_note)}</div>` : ''}
-        ${b.status === 'accepted' ? payTo(b) : ''}
         <div class="bk-actions">
           ${b.status === 'accepted' ? startButton(b) : ''}
           ${b.scorecard ? `<button class="btn xs" type="button" data-act="view-card" data-id="${b.id}">View scorecard</button>` : ''}

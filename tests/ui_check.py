@@ -164,7 +164,7 @@ def main():
         p = page_for(b, "learner", errors)
         p.goto(base + "/dashboard.html"); p.wait_for_selector("text=Sessions")
         check("learner sees Start session on accepted booking, closed until near the time", p.locator("button:has-text('Start session')").count() == 1 and p.locator("button:has-text('Start session')").is_disabled())
-        check("learner sees the guide's UPI ID on the accepted session", p.locator(".pay-to code").first.inner_text() == "rahul.d@okicici")
+        check("learner session cards show no price or pay-by-UPI message", p.locator(".pay-to").count() == 0 and "₹" not in p.inner_text("[data-panel=sessions]"))
         check("all dashboard tabs fit on a phone screen", p.evaluate("[...document.querySelectorAll('.dash-tabs button')].every(x => { const r = x.getBoundingClientRect(); return r.right <= innerWidth && r.left >= 0; })"))
         q = page_for(b, "learner", errors)
         q.add_init_script("localStorage.setItem('nr-seen-l1', JSON.stringify({b1: 'requested|x', b2: 'requested|' + 'old', b3: 'accepted|x'}))")
