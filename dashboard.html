@@ -308,7 +308,8 @@
     const done = bookings.filter(b => b.status === 'completed');
     const booked = bookings.filter(b => ['requested', 'accepted', 'completed'].includes(b.status));
     const PACKS = [
-      ['Single session', 'Any service from any guide, with a written scorecard', 'From ₹699', true],
+      ['Demo session', 'Your first session, to meet a guide', 'Free', true],
+      ['Single session', 'Any service from any guide, with a written scorecard', '₹599', true],
       ['Placement pack', 'One workshop, three mock panels, one case round and a resume review', '₹3,499'],
       ['Career switch pack', 'Roadmap session, two check-ins, two senior mocks and a LinkedIn rewrite', '₹4,999']];
     const history = bookings.slice().sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at));
