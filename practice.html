@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Free sample interview questions and case briefs for six fields, with how to answer them.">
+<title>Sample interview questions · NextRung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/theme.css">
+<meta name="theme-color" content="#0B2545">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NextRung">
+<meta property="og:title" content="NextRung · Career guidance from people one rung ahead">
+<meta property="og:description" content="Book one-to-one sessions with verified professionals in your field. Mock panels, career roadmaps and resume reviews, with a written scorecard after every session.">
+<meta property="og:image" content="https://adityabankar266.github.io/nextrung/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 18 18"><path d="M5 1v16M13 1v16" stroke="var(--paper)" stroke-width="2" stroke-linecap="round"/><path d="M5 14h8M5 9h8" stroke="var(--paper)" stroke-width="2"/><path d="M5 4h8" stroke="var(--accent)" stroke-width="2.4"/></svg></span><span>Next<b>Rung</b></span></a>
+    <nav class="links" aria-label="Main"><a href="guides.html">Find a guide</a><a href="index.html#how">How it works</a><a href="index.html#plans">Pricing</a><a href="index.html#faq">FAQ</a></nav>
+    <div class="nav-cta" data-auth-slot></div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Free practice</span>
+      <h1 id="fields-h">Sample interview questions</h1>
+      <p class="lede">Pick a field to see three questions with how to answer them, and a case brief.</p>
+    </div>
+    <div class="tabs scroll-row" role="tablist" aria-label="Choose a field" id="tabs"></div>
+    <div class="panel" id="panel" role="tabpanel" aria-live="polite"></div>
+    <p style="margin-top:28px"><a class="btn" href="guides.html">Practise with a guide</a></p>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="f-brand"><strong>NextRung</strong><span>Career guidance from verified professionals, for freshers and experienced people across India.</span></div>
+    <nav aria-label="Footer">
+      <a href="guides.html">Find a guide</a>
+      <a href="login.html?mode=signup&amp;role=guide">Become a guide</a>
+      <a href="index.html#services">Services</a>
+      <a href="index.html#plans">Pricing</a>
+      <a href="index.html#faq">FAQ</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+    </nav>
+    <div class="f-legal">© 2026 NextRung · Pune, India · Sessions are online, across India<span data-contact data-contact-optional hidden></span></div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/core.js"></script>
+<script>
+const FIELDS = {
+  "Software Development": {
+    intro: "Fundamentals, problem solving and system design.",
+    qs: [
+      ["Technical","What is the difference between a process and a thread?","A process has its own memory space; threads share the memory of their process. Mention the trade-off: threads are cheaper to create but need synchronisation to avoid race conditions."],
+      ["Design","How would you design a URL shortener?","Start with requirements and scale, then the API, the ID-generation approach, storage choice, redirect flow and caching. Say what you would trade off and why."],
+      ["Behavioural","Tell me about a bug that took you a long time to find.","Use STAR. Spend most of the time on the Action: how you narrowed it down, the tools you used and what you changed so it would not happen again."]
+    ],
+    brief: {title:"Book-lending API", text:"Design and explain a REST API for a college library that lends books to students.", items:["Data model for books, members and loans","Endpoints with request and response examples","Edge cases: overdue loans, reservations"], time:"10 min presentation · 20 min questions"}
+  },
+  "Business Analysis": {
+    intro: "Requirements, stakeholders, process thinking and Agile delivery.",
+    qs: [
+      ["Scenario","Two stakeholders want conflicting features in the same release. What do you do?","Clarify the business goal behind each request, quantify impact, bring both to one discussion with data, and agree on priority with the product owner. Record the decision."],
+      ["Hands-on","Write a user story with acceptance criteria for 'forgot password'.","As a registered user, I want to reset my password by email so I can regain access. Add Given/When/Then criteria for valid email, unknown email, expired link and rate limits."],
+      ["Concept","What is the difference between a BRD and an FRD?","A BRD states what the business needs and why. An FRD describes how the system should behave to meet those needs. Mention who signs off each."]
+    ],
+    brief: {title:"Rising order returns", text:"A consumer-goods distributor saw order returns rise 18% last quarter. Find out why and propose fixes.", items:["As-is order-to-delivery process","Top three root causes with evidence","Three change requests with acceptance criteria"], time:"12 min presentation · 20 min questions"}
+  },
+  "Quality Assurance": {
+    intro: "Test design, defect handling and knowing when to automate.",
+    qs: [
+      ["Concept","What is the difference between severity and priority?","Severity is the technical impact of a defect. Priority is how soon the business needs it fixed. Give an example of high severity with low priority."],
+      ["Hands-on","Write test cases for a login page.","Cover valid login, invalid credentials, empty fields, locked account, password masking, session timeout and basic security checks such as SQL injection."],
+      ["Judgement","When would you automate a test instead of running it manually?","Automate stable, repetitive, high-value checks like regression suites. Keep exploratory, one-off and fast-changing UI tests manual."]
+    ],
+    brief: {title:"Checkout test plan", text:"An e-commerce app is adding UPI and cash-on-delivery to checkout. Prepare the test approach.", items:["Scope and out-of-scope","Top five risks and how you will test them","Entry and exit criteria for release"], time:"10 min presentation · 20 min questions"}
+  },
+  "Data Analytics": {
+    intro: "SQL, data cleaning and turning numbers into a story.",
+    qs: [
+      ["Technical","Explain the difference between INNER, LEFT and FULL joins.","Describe which rows each keeps, sketch a quick example with two small tables and mention when a LEFT join is safer for reporting."],
+      ["Practical","How do you handle missing values in a dataset?","First understand why they are missing. Then choose: remove, fill with a sensible value, or flag. Explain how the choice affects the analysis."],
+      ["Communication","Explain a chart you built to someone non-technical.","Lead with the one finding, then the evidence, then the action it supports. Avoid walking through every axis."]
+    ],
+    brief: {title:"Sales dip dashboard", text:"Monthly sales fell in two of five regions. Use the sample data to explain what happened.", items:["Cleaning steps you applied","Two or three charts that tell the story","One recommendation for the sales head"], time:"10 min presentation · 20 min questions"}
+  },
+  "Marketing": {
+    intro: "Campaign thinking, metrics and go-to-market for Indian markets.",
+    qs: [
+      ["Metrics","How would you measure whether a campaign worked?","Define the goal first, then pick matching metrics: reach and recall for awareness, CAC and conversion for acquisition. Compare against a baseline."],
+      ["Strategy","How would you launch a new snack brand in Tier-2 cities?","Cover target customer, price point, distribution through local retail, regional-language content and a small pilot before scaling."],
+      ["Concept","What is the relationship between CAC and LTV?","CAC is the cost to win a customer; LTV is what that customer brings over time. A healthy business keeps LTV well above CAC."]
+    ],
+    brief: {title:"D2C launch plan", text:"Plan the first 90 days for a new ₹499 skincare product with a ₹5 lakh budget.", items:["Target customer and positioning","Channel mix and budget split","Three KPIs and targets for day 90"], time:"12 min presentation · 20 min questions"}
+  },
+  "Leadership": {
+    intro: "For new team leads and managers: people, priorities and hard conversations.",
+    qs: [
+      ["Behavioural","Tell me about a time you handled an underperforming team member.","Use STAR. Show that you found the cause first, set clear expectations, supported them and followed up. Share the result honestly."],
+      ["Scenario","Your team has more work than capacity. How do you prioritise?","Tie work to business outcomes, agree priority with stakeholders, say no or later clearly, and protect the team from constant switching."],
+      ["People","How do you give difficult feedback?","Be specific and timely, describe the behaviour and its impact, listen to their view and agree on next steps together."]
+    ],
+    brief: {title:"Sprint recovery plan", text:"Your team has missed two sprint goals in a row and morale is low. Present a 30-day plan.", items:["Your reading of the causes","Changes to planning and team rituals","How you will communicate with stakeholders"], time:"10 min presentation · 20 min questions"}
+  }
+};
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const names = Object.keys(FIELDS);
+
+/* field explorer */
+const tabsEl = document.getElementById('tabs');
+const panelEl = document.getElementById('panel');
+function renderField(name){
+  const f = FIELDS[name];
+  [...tabsEl.children].forEach(b => b.setAttribute('aria-selected', b.dataset.name === name ? 'true' : 'false'));
+  panelEl.innerHTML = `
+    <div class="qlist">
+      <p class="intro">${esc(f.intro)}</p>
+      ${f.qs.map((q,i) => `
+        <details class="q"${i===0?' open':''}>
+          <summary><span class="tag">${esc(q[0])}</span><span>${esc(q[1])}</span><span class="plus" aria-hidden="true">+</span></summary>
+          <p class="ans"><strong>How to answer:</strong> ${esc(q[2])}</p>
+        </details>`).join('')}
+    </div>
+    <div class="brief">
+      <span class="eyebrow">Sample case brief</span>
+      <h3>${esc(f.brief.title)}</h3>
+      <p>${esc(f.brief.text)}</p>
+      <ul>${f.brief.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>
+      <span class="timer">${esc(f.brief.time)}</span>
+    </div>`;
+}
+names.forEach((n,i) => {
+  const b = document.createElement('button');
+  b.className='tab'; b.type='button'; b.setAttribute('role','tab'); b.id='tab-'+i;
+  b.dataset.name=n; b.textContent=n;
+  b.addEventListener('click', () => renderField(n));
+  tabsEl.appendChild(b);
+});
+renderField('Business Analysis');
+</script>
+
+</body>
+</html>

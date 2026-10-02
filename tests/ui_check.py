@@ -227,11 +227,13 @@ def main():
         check("phone menu opens the section links", p.locator("nav.links a:has-text('Pricing')").is_visible())
         check("no undelivered promises on the home page", not any(x in p.content() for x in ["Recording in your portal", "Question bank for all fields", "Weekly payouts", "placeholders for this concept", "nextrung.in/"]))
         check("no sample dashboard preview on the home page", p.locator("#portal").count() == 0 and "Sample data" not in p.content())
-        order = p.evaluate("['how','guides','services','fields','plans','for-guides','faq'].map(id => document.getElementById(id).getBoundingClientRect().top)")
+        order = p.evaluate("['how','guides','services','why','plans','for-guides','faq'].map(id => document.getElementById(id).getBoundingClientRect().top)")
         check("home sections follow the learner path", order == sorted(order), order)
-        check("field chips link to the filtered directory", p.locator(".field-links a[href*='guides.html?field=']").count() == 6)
+        check("hero has one main button and no field chips", p.locator(".hero .hero-actions a").count() == 1 and p.locator(".field-links").count() == 0 and p.locator(".hero a[href='#how']").count() == 0)
+        check("example scorecard fits the phone screen", p.evaluate("(() => { const w = document.querySelector('.hero .win'); const r = w.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && [...w.querySelectorAll('.bar-row i')].every(b => b.getBoundingClientRect().width >= 80) })()"))
+        check("home page copy stays short", p.evaluate("document.querySelector('main').innerText.split(/\\s+/).length") <= 600, p.evaluate("document.querySelector('main').innerText.split(/\\s+/).length"))
         check("phones see at most 3 guide cards on the home page", p.evaluate("[...document.querySelectorAll('#glist .guide')].filter(e => e.offsetParent).length") <= 3)
-        check("home page fits in about 11 phone screens", p.evaluate("document.documentElement.scrollHeight / innerHeight") <= 11, p.evaluate("document.documentElement.scrollHeight / innerHeight"))
+        check("home page fits in about 10 phone screens", p.evaluate("document.documentElement.scrollHeight / innerHeight") <= 10, p.evaluate("document.documentElement.scrollHeight / innerHeight"))
         check("footer links to privacy and terms", p.locator("footer a[href='privacy.html']").count() == 1 and p.locator("footer a[href='terms.html']").count() == 1)
         check("pages have a favicon and link preview", p.locator("link[rel=icon]").count() == 1 and p.locator("meta[property='og:image']").count() == 1)
         p.goto(base + "/guides.html?id=g1"); p.wait_for_selector("dialog[open]")
@@ -243,7 +245,7 @@ def main():
             check(f"{legal} page loads", p.locator("h1").count() == 1 and p.locator("[data-contact]:not([data-contact-optional])").count() >= 1)
 
         overflow = []
-        for path in ["/index.html", "/guides.html", "/dashboard.html", "/login.html", "/privacy.html", "/terms.html"]:
+        for path in ["/index.html", "/practice.html", "/guides.html", "/dashboard.html", "/login.html", "/privacy.html", "/terms.html"]:
             q = page_for(b, "guide", errors); q.goto(base + path); q.wait_for_timeout(500)
             if q.evaluate("document.documentElement.scrollWidth > window.innerWidth + 1"): overflow.append(path)
         check("no sideways scrolling on phones", not overflow, overflow)

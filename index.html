@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="NextRung: career guidance from verified professionals for freshers and experienced people. Mock panels, career switch roadmaps, resume reviews and more.">
+<meta name="description" content="NextRung: 1:1 mock interviews and career sessions with verified professionals in your field, with a written scorecard after every session.">
 <title>NextRung</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap">
 <link rel="stylesheet" href="css/site.css">
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/theme.css">
@@ -23,7 +23,7 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 </head>
-<body>
+<body class="home">
 
 <header class="top">
   <div class="wrap">
@@ -46,51 +46,35 @@
   <section class="hero">
     <div class="wrap">
       <div class="hero-copy">
-        <span class="eyebrow">Career guidance · Freshers to experienced</span>
-        <h1>Reach your next rung with people who have <em>already climbed it</em>.</h1>
-        <p class="lede">Book one-to-one sessions with working professionals in your field, for interviews, a career switch or your next promotion. Every session ends with a written scorecard.</p>
+        <span class="eyebrow">1:1 career sessions</span>
+        <h1>Mock interviews and career advice from people <em>one rung ahead</em>.</h1>
+        <p class="lede">Book a video session with a verified professional in your field. Every session ends with a written scorecard.</p>
         <div class="hero-actions">
           <a class="btn lg" href="guides.html">Find a guide</a>
-          <a class="btn ghost lg" href="#how">How it works</a>
         </div>
+        <p class="micro">Free to browse · Sessions from ₹699</p>
         <p class="hero-alt guest-only">Experienced professional? <a href="#for-guides">Become a guide</a></p>
-        <div class="field-links" aria-label="Browse guides by field"><span class="fl-label">Browse by field</span><a class="chip" href="guides.html?field=Software%20Development">Software Development</a><a class="chip" href="guides.html?field=Business%20Analysis">Business Analysis</a><a class="chip" href="guides.html?field=Quality%20Assurance">Quality Assurance</a><a class="chip" href="guides.html?field=Data%20Analytics">Data Analytics</a><a class="chip" href="guides.html?field=Marketing">Marketing</a><a class="chip" href="guides.html?field=Leadership">Leadership</a></div>
       </div>
 
-      <aside class="scorecard" aria-label="Example feedback scorecard">
-        <div class="sc-head">
-          <div>
-            <div class="who">Session scorecard</div>
-            <div class="meta">Business Analysis · Case round · 45 min</div>
-          </div>
-          <span class="stamp">Ready: 2 fixes</span>
+      <aside class="win" aria-label="Example session scorecard">
+        <div class="win-bar"><span class="win-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="win-title">Session scorecard</span><span class="win-live">Example</span></div>
+        <div class="win-body">
+          <div class="sc-top"><div><b>Business Analysis</b><span>Case round · 45 min</span></div><span class="sc-verdict">Ready: 2 fixes</span></div>
+          <div class="bar-row"><span>Problem framing</span><i style="--v:80%"></i><b>4/5</b></div>
+          <div class="bar-row"><span>User stories</span><i style="--v:80%"></i><b>4/5</b></div>
+          <div class="bar-row"><span>Stakeholder handling</span><i style="--v:60%"></i><b>3/5</b></div>
+          <div class="bar-row"><span>Communication</span><i style="--v:60%"></i><b>3/5</b></div>
+          <p class="sc-quote"><b>Guide's note</b>Restate the business impact before you agree to a trade-off.</p>
         </div>
-        <div class="crit">
-          <span class="name">Problem framing</span><span class="score">4 / 5</span>
-          <span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span>
-        </div>
-        <div class="crit extra">
-          <span class="name">Requirements &amp; user stories</span><span class="score">4 / 5</span>
-          <span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span>
-        </div>
-        <div class="crit">
-          <span class="name">Stakeholder handling</span><span class="score">3 / 5</span>
-          <span class="dots"><i class="hi"></i><i class="hi"></i><i class="hi"></i><i></i><i></i></span>
-        </div>
-        <div class="crit extra">
-          <span class="name">Communication &amp; structure</span><span class="score">3 / 5</span>
-          <span class="dots"><i class="hi"></i><i class="hi"></i><i class="hi"></i><i></i><i></i></span>
-        </div>
-        <div class="sc-note"><b>Guide's note</b>Clear as-is process. When the sales head pushed back, you gave up scope too quickly. Next time, restate the business impact before agreeing to a trade-off.</div>
       </aside>
     </div>
   </section>
 
   <section class="trust" aria-label="Why NextRung">
     <ul class="trust-list">
-      <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 9.5C8 19.3 5 15.5 5 11V6z"/><path d="M9 12l2 2 4-4"/></svg><span><b>Verified professionals</b>Checked by our team before they're listed</span></li>
-      <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v3h6V3M9 11l1.5 1.5L13 10M9 16h6"/></svg><span><b>A scorecard every time</b>Rated skills, notes and what to fix next</span></li>
-      <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h10M7 9h10M7 5c5 0 7 1.5 7 4s-2 4-7 4l7 7"/></svg><span><b>Pay per session</b>From ₹699, no subscription</span></li>
+      <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 9.5C8 19.3 5 15.5 5 11V6z"/><path d="M9 12l2 2 4-4"/></svg><b>Verified professionals</b></li>
+      <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v3h6V3M9 11l1.5 1.5L13 10M9 16h6"/></svg><b>A scorecard every time</b></li>
+      <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h10M7 9h10M7 5c5 0 7 1.5 7 4s-2 4-7 4l7 7"/></svg><b>Pay per session</b></li>
     </ul>
   </section>
 
@@ -98,29 +82,52 @@
     <div class="wrap">
       <div class="sec-head">
         <span class="eyebrow">How it works</span>
-        <h2 id="how-h">Three steps from booking to feedback</h2>
+        <h2 id="how-h">Three steps to honest feedback</h2>
       </div>
-      <ol class="how-steps">
-        <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span class="n" aria-hidden="true">1</span><h3>Pick a guide and a time</h3><p>Browse verified professionals by field and book one of their open slots.</p></li>
-        <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg><span class="n" aria-hidden="true">2</span><h3>Meet on video</h3><p>A one-to-one mock panel, roadmap or review at the time you booked.</p></li>
-        <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v3h6V3M9 11l1.5 1.5L13 10M9 16h6"/></svg><span class="n" aria-hidden="true">3</span><h3>Get your scorecard</h3><p>Rated skills, your guide's notes and priority fixes, saved in your dashboard.</p></li>
+      <ol class="timeline">
+        <li>
+          <span class="tl-n" aria-hidden="true">1</span>
+          <div class="tl-card">
+            <div class="tl-vis" aria-hidden="true">
+              <div class="mini-guide"><span class="av">RD</span><div><b>Senior BA · 9 yrs</b><span>ERP &amp; supply chain</span></div><span class="verified">✓ Verified</span></div>
+              <div class="mini-slots"><span>Tue 7:00 PM</span><span class="on">Wed 8:30 PM</span><span>Sat 11:00 AM</span></div>
+            </div>
+            <div class="tl-text"><span class="tl-time">2 min</span><h3>Pick a guide and a time</h3><p>Choose a verified professional and one of their open slots.</p></div>
+          </div>
+        </li>
+        <li>
+          <span class="tl-n" aria-hidden="true">2</span>
+          <div class="tl-card">
+            <div class="tl-vis dark" aria-hidden="true">
+              <div class="mini-call"><div class="tile"><span class="av">RD</span><small>Guide</small></div><div class="tile you"><span class="av">You</span><small>Camera on</small></div></div>
+              <p class="bubble">“Returns rose 18% last quarter. Where would you start?”</p>
+            </div>
+            <div class="tl-text"><span class="tl-time">30–60 min</span><h3>Meet 1:1 on video</h3><p>A live mock interview, roadmap or review.</p></div>
+          </div>
+        </li>
+        <li>
+          <span class="tl-n" aria-hidden="true">3</span>
+          <div class="tl-card">
+            <div class="tl-vis" aria-hidden="true">
+              <div class="mini-fixes"><span class="lbl">Fix next</span><p><i>1</i>Restate impact before trade-offs</p><p><i>2</i>Slow down on the as-is process</p><span class="sc-verdict">Ready: 2 fixes</span></div>
+            </div>
+            <div class="tl-text"><span class="tl-time">After the session</span><h3>Get your scorecard</h3><p>Rated skills, your guide's notes and what to fix next.</p></div>
+          </div>
+        </li>
       </ol>
+      <div class="sec-cta"><a class="btn lg" href="guides.html">Find a guide</a><p class="micro">Free to browse · Pay only when you book</p></div>
     </div>
   </section>
 
   <section class="block" id="guides" aria-labelledby="guides-h">
     <div class="wrap">
-      <div class="sec-head row">
-        <div>
-          <span class="eyebrow">Guides</span>
-          <h2 id="guides-h">Meet guides in your field</h2>
-          <p class="lede">Every guide is verified and has hiring or team-lead experience.</p>
-        </div>
-        <a class="btn ghost" href="guides.html">See all guides</a>
+      <div class="sec-head">
+        <span class="eyebrow">Guides</span>
+        <h2 id="guides-h">Meet the people one rung ahead</h2>
       </div>
-      <div class="filters scroll-row" role="tablist" aria-label="Filter guides" id="gfilters"></div>
       <div class="guides" id="glist"></div>
       <p class="sample-flag" id="gflag">Sample profiles shown until the first guides are verified.</p>
+      <div class="sec-cta"><a class="btn ghost lg" href="guides.html">See all guides</a></div>
     </div>
   </section>
 
@@ -128,22 +135,39 @@
     <div class="wrap">
       <div class="sec-head">
         <span class="eyebrow">What you can book</span>
-        <h2 id="svc-h">Help for every stage of your career</h2>
-        <p class="lede">Each guide lists the services they offer, with the duration and price shown before you book.</p>
+        <h2 id="svc-h">Help for every stage</h2>
       </div>
-      <div class="svc-grid"><article class="svc-card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><div><span class="aud-tag">Any level</span><h3>Interview practice</h3><p>One-to-one practice with role-specific questions, from campus rounds to senior roles.</p></div></article><article class="svc-card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.2c3 .3 5.5 2.7 5.5 5.8"/></svg><div><span class="aud-tag">Any level</span><h3>Mock panels and case rounds</h3><p>Present a real problem, answer follow-up questions and get scored.</p></div></article><article class="svc-card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg><div><span class="aud-tag">Freshers</span><h3>Resume and LinkedIn review</h3><p>Make your resume clear and recruiter-ready.</p></div></article><article class="svc-card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg><div><span class="aud-tag">Experienced</span><h3>Career switch roadmap</h3><p>A step-by-step plan to move roles, such as QA to BA or developer to product.</p></div></article><article class="svc-card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18l5-5 4 4 7-7"/><path d="M15 10h5v5"/></svg><div><span class="aud-tag">Experienced</span><h3>Promotion and leadership coaching</h3><p>Prepare for team lead and manager roles and interviews.</p></div></article><article class="svc-card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h10M7 9h10M7 5c5 0 7 1.5 7 4s-2 4-7 4l7 7"/></svg><div><span class="aud-tag">Experienced</span><h3>Offer and salary discussion</h3><p>Understand an offer and prepare for the negotiation.</p></div></article></div>
+      <ul class="svc-grid"><li class="svc-card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><h3>Interview practice</h3></li><li class="svc-card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.2c3 .3 5.5 2.7 5.5 5.8"/></svg><h3>Mock panels and case rounds</h3></li><li class="svc-card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg><h3>Resume and LinkedIn review</h3></li><li class="svc-card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg><h3>Career switch roadmap</h3></li><li class="svc-card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18l5-5 4 4 7-7"/><path d="M15 10h5v5"/></svg><h3>Promotion and leadership coaching</h3></li><li class="svc-card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h10M7 9h10M7 5c5 0 7 1.5 7 4s-2 4-7 4l7 7"/></svg><h3>Offer and salary discussion</h3></li></ul>
+      <p class="sec-link"><a href="practice.html">Try free sample interview questions →</a></p>
     </div>
   </section>
 
-  <section class="block" id="fields" aria-labelledby="fields-h">
+  <section class="block" id="why" aria-labelledby="why-h">
     <div class="wrap">
       <div class="sec-head">
-        <span class="eyebrow">Sample questions</span>
-        <h2 id="fields-h">Practise with real interview questions</h2>
-        <p class="lede">A few questions from each field with how to answer them, plus the kind of case brief you might present in a panel round.</p>
+        <span class="eyebrow">Why NextRung</span>
+        <h2 id="why-h">Advice is everywhere. Feedback on you isn't.</h2>
       </div>
-      <div class="tabs scroll-row" role="tablist" aria-label="Choose a field" id="tabs"></div>
-      <div class="panel" id="panel" role="tabpanel" aria-live="polite"></div>
+      <div class="compare">
+        <div>
+          <span class="cmp-label">Other options</span>
+          <ul class="cmp no">
+            <li>Coaching classes give <b>one answer to a whole batch</b></li>
+            <li>Cold LinkedIn messages <b>often go unanswered</b></li>
+            <li>Videos <b>can't tell you what you got wrong</b></li>
+            <li>AI mocks <b>aren't judged by someone who hires</b></li>
+          </ul>
+        </div>
+        <div>
+          <span class="cmp-label us">NextRung</span>
+          <ul class="cmp yes">
+            <li><b>A verified professional</b> from your field</li>
+            <li><b>1:1 on video</b>, at a time you pick</li>
+            <li><b>A written scorecard</b> after every session</li>
+            <li><b>From ₹699</b>, pay per session</li>
+          </ul>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -151,24 +175,15 @@
     <div class="wrap">
       <div class="sec-head">
         <span class="eyebrow">Pricing</span>
-        <h2 id="plans-h">Pay only for the sessions you book</h2>
-        <p class="lede">No subscription. Each guide sets their own price, and you see it before you book.</p>
+        <h2 id="plans-h">Pay only for what you book</h2>
       </div>
-      <div class="price-row">
-        <div class="plan">
-          <h3>Browse</h3>
-          <div class="price">Free</div>
-          <ul class="ticks"><li>See every verified guide</li><li>Prices and open times</li><li>Sample questions for each field</li></ul>
-          <a class="btn ghost" href="guides.html">Browse guides</a>
-        </div>
-        <div class="plan feature">
-          <h3>Single session</h3>
-          <div class="price">₹699+ <small>per session, set by each guide</small></div>
-          <ul class="ticks"><li>Any service from any guide</li><li>Written scorecard afterwards</li><li>Reschedule from your dashboard</li></ul>
-          <a class="btn" href="guides.html">Find a guide</a>
-        </div>
+      <div class="price-one plan feature">
+        <h3>Single session</h3>
+        <div class="price">₹699+ <small>set by each guide</small></div>
+        <ul class="ticks"><li>Any service from any guide</li><li>Written scorecard afterwards</li><li>Reschedule from your dashboard</li></ul>
+        <a class="btn lg" href="guides.html">Find a guide</a>
+        <p class="micro">No subscription · Session packs coming soon</p>
       </div>
-      <p class="fine"><span class="tag soon">Coming soon</span> Placement pack (₹3,499) and Career switch pack (₹4,999): several sessions at a lower total price. For reference, a one-hour mock interview with an expert in India usually costs ₹1,200–₹3,000.</p>
     </div>
   </section>
 
@@ -176,16 +191,16 @@
     <div class="wrap">
       <div class="gb-copy">
         <span class="eyebrow">For professionals</span>
-        <h2 id="fg-h">Guide people who are one rung behind you</h2>
-        <p>Share what you've learned in hiring rooms and delivery teams. You choose your services, prices and hours.</p>
-        <p class="gb-fee"><b>Free to join.</b> For now, learners pay you directly. Once online checkout launches, NextRung keeps 15% of each session.</p>
+        <h2 id="fg-h">Guide people one rung behind you</h2>
+        <p>You choose your services, prices and hours.</p>
         <a class="btn lg guest-only" href="login.html?mode=signup&amp;role=guide">Apply as a guide</a>
+        <p class="gb-fee"><b>Free to join.</b> Learners pay you directly for now. NextRung keeps 15% once online checkout launches.</p>
       </div>
       <ol class="gb-steps">
-        <li><b>Apply</b><span>Share your LinkedIn, field and the services you want to offer.</span></li>
-        <li><b>Get verified</b><span>Our team checks your role and hiring experience, usually within two working days.</span></li>
-        <li><b>Set services and slots</b><span>Choose your prices and the times you're free each week.</span></li>
-        <li><b>Guide and get paid</b><span>Run sessions on video and share a scorecard after each one.</span></li>
+        <li><b>Apply</b></li>
+        <li><b>Get verified</b></li>
+        <li><b>Set services and slots</b></li>
+        <li><b>Guide and get paid</b></li>
       </ol>
     </div>
   </section>
@@ -193,41 +208,34 @@
   <section class="block" id="campus" aria-labelledby="campus-h">
     <div class="wrap">
       <div class="campus">
-        <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
-          <span class="eyebrow">For colleges &amp; companies</span>
-          <h2 id="campus-h">Run a mock placement drive before the real one</h2>
-          <p>We bring panel rounds to your batch or team and share a readiness report with the placement cell or HR.</p>
-          <a class="btn" id="campus-cta" style="align-self:flex-start" hidden>Talk to us</a>
-        </div>
-        <ul>
-          <li>Batches of 30–120 students</li>
-          <li>Mock panels across all six fields in one drive</li>
-          <li>Readiness report with common gaps</li>
-          <li>Coaching for new managers in companies</li>
-        </ul>
+        <span class="eyebrow">For colleges &amp; companies</span>
+        <h2 id="campus-h">Mock placement drives for your batch</h2>
+        <p>Panel rounds for 30–120 students, with a readiness report for the placement cell or HR.</p>
+        <a class="btn" id="campus-cta" hidden>Talk to us</a>
       </div>
     </div>
   </section>
 
   <section class="block" id="faq" aria-labelledby="faq-h">
     <div class="wrap faq">
-      <div class="sec-head" style="margin-bottom:12px">
+      <div class="sec-head">
         <span class="eyebrow">Questions</span>
         <h2 id="faq-h">Before you book</h2>
       </div>
-      <details><summary>Who is this platform for?</summary><p>Students, recent graduates and working professionals who want help with interviews, a career switch, a promotion or their resume. Experienced professionals can also join as guides.</p></details>
-      <details><summary>Are sessions online?</summary><p>Yes. All one-to-one sessions run on video. Campus and company workshops can also be held in person.</p></details>
-      <details><summary>How is this different from AI mock interview apps?</summary><p>AI apps are useful for unlimited practice. Here, an experienced person questions you live, reacts to your answers and gives you advice based on real hiring decisions.</p></details>
-      <details><summary>How are guides verified?</summary><p>Our team reviews every application. We check the LinkedIn profile, the current role and that the person has interviewed or led people in their field. Only verified guides appear in the directory.</p></details>
-      <details><summary>How do guides get paid?</summary><p>Guides set their own prices. For now, learners pay the guide directly by UPI once the guide accepts the session; the guide's UPI ID appears in the learner's dashboard. Online checkout is coming next.</p></details>
-      <details><summary>Do you guarantee a job?</summary><p>No. We help you prepare and show you exactly where you stand. The offer depends on you and the employer.</p></details>
+      <details><summary>Who is this for?</summary><p>Students, recent graduates and working professionals who want help with interviews, a career switch, a promotion or their resume.</p></details>
+      <details><summary>Are sessions online?</summary><p>Yes. All one-to-one sessions run on video.</p></details>
+      <details><summary>How are guides verified?</summary><p>Our team checks each applicant's LinkedIn profile, current role and experience of interviewing or leading people in their field.</p></details>
+      <details><summary>How do I pay?</summary><p>For now, you pay the guide directly by UPI once they accept your session. Their UPI ID appears in your dashboard. Online checkout is coming next.</p></details>
+      <details><summary>How is this different from AI mock interview apps?</summary><p>AI apps are useful for unlimited practice. Here, an experienced person questions you live and gives advice based on real hiring decisions.</p></details>
+      <details><summary>Do you guarantee a job?</summary><p>No. We help you prepare and show you where you stand. The offer depends on you and the employer.</p></details>
     </div>
   </section>
+
   <section class="cta-band guest-only" id="enroll" aria-labelledby="cta-h">
     <div class="wrap">
-      <h2 id="cta-h">Ready for your next step?</h2>
-      <p>Browsing is free. Create an account when you're ready to book.</p>
+      <h2 id="cta-h">Ready for your next rung?</h2>
       <div class="hero-actions"><a class="btn lg" href="guides.html">Find a guide</a><a class="btn ghost lg" href="login.html?mode=signup&amp;role=guide">Become a guide</a></div>
+      <p class="micro">Free to browse · no card needed</p>
     </div>
   </section>
 </main>
@@ -238,7 +246,7 @@
     <nav aria-label="Footer">
       <a href="guides.html">Find a guide</a>
       <a href="login.html?mode=signup&amp;role=guide">Become a guide</a>
-      <a href="index.html#services">Services</a>
+      <a href="practice.html">Sample questions</a>
       <a href="index.html#plans">Pricing</a>
       <a href="index.html#faq">FAQ</a>
       <a href="privacy.html">Privacy</a>
@@ -252,116 +260,17 @@
 <script src="js/config.js"></script>
 <script src="js/core.js"></script>
 <script>
-const FIELDS = {
-  "Software Development": {
-    intro: "Fundamentals, problem solving and system design.",
-    qs: [
-      ["Technical","What is the difference between a process and a thread?","A process has its own memory space; threads share the memory of their process. Mention the trade-off: threads are cheaper to create but need synchronisation to avoid race conditions."],
-      ["Design","How would you design a URL shortener?","Start with requirements and scale, then the API, the ID-generation approach, storage choice, redirect flow and caching. Say what you would trade off and why."],
-      ["Behavioural","Tell me about a bug that took you a long time to find.","Use STAR. Spend most of the time on the Action: how you narrowed it down, the tools you used and what you changed so it would not happen again."]
-    ],
-    brief: {title:"Book-lending API", text:"Design and explain a REST API for a college library that lends books to students.", items:["Data model for books, members and loans","Endpoints with request and response examples","Edge cases: overdue loans, reservations"], time:"10 min presentation · 20 min questions"}
-  },
-  "Business Analysis": {
-    intro: "Requirements, stakeholders, process thinking and Agile delivery.",
-    qs: [
-      ["Scenario","Two stakeholders want conflicting features in the same release. What do you do?","Clarify the business goal behind each request, quantify impact, bring both to one discussion with data, and agree on priority with the product owner. Record the decision."],
-      ["Hands-on","Write a user story with acceptance criteria for 'forgot password'.","As a registered user, I want to reset my password by email so I can regain access. Add Given/When/Then criteria for valid email, unknown email, expired link and rate limits."],
-      ["Concept","What is the difference between a BRD and an FRD?","A BRD states what the business needs and why. An FRD describes how the system should behave to meet those needs. Mention who signs off each."]
-    ],
-    brief: {title:"Rising order returns", text:"A consumer-goods distributor saw order returns rise 18% last quarter. Find out why and propose fixes.", items:["As-is order-to-delivery process","Top three root causes with evidence","Three change requests with acceptance criteria"], time:"12 min presentation · 20 min questions"}
-  },
-  "Quality Assurance": {
-    intro: "Test design, defect handling and knowing when to automate.",
-    qs: [
-      ["Concept","What is the difference between severity and priority?","Severity is the technical impact of a defect. Priority is how soon the business needs it fixed. Give an example of high severity with low priority."],
-      ["Hands-on","Write test cases for a login page.","Cover valid login, invalid credentials, empty fields, locked account, password masking, session timeout and basic security checks such as SQL injection."],
-      ["Judgement","When would you automate a test instead of running it manually?","Automate stable, repetitive, high-value checks like regression suites. Keep exploratory, one-off and fast-changing UI tests manual."]
-    ],
-    brief: {title:"Checkout test plan", text:"An e-commerce app is adding UPI and cash-on-delivery to checkout. Prepare the test approach.", items:["Scope and out-of-scope","Top five risks and how you will test them","Entry and exit criteria for release"], time:"10 min presentation · 20 min questions"}
-  },
-  "Data Analytics": {
-    intro: "SQL, data cleaning and turning numbers into a story.",
-    qs: [
-      ["Technical","Explain the difference between INNER, LEFT and FULL joins.","Describe which rows each keeps, sketch a quick example with two small tables and mention when a LEFT join is safer for reporting."],
-      ["Practical","How do you handle missing values in a dataset?","First understand why they are missing. Then choose: remove, fill with a sensible value, or flag. Explain how the choice affects the analysis."],
-      ["Communication","Explain a chart you built to someone non-technical.","Lead with the one finding, then the evidence, then the action it supports. Avoid walking through every axis."]
-    ],
-    brief: {title:"Sales dip dashboard", text:"Monthly sales fell in two of five regions. Use the sample data to explain what happened.", items:["Cleaning steps you applied","Two or three charts that tell the story","One recommendation for the sales head"], time:"10 min presentation · 20 min questions"}
-  },
-  "Marketing": {
-    intro: "Campaign thinking, metrics and go-to-market for Indian markets.",
-    qs: [
-      ["Metrics","How would you measure whether a campaign worked?","Define the goal first, then pick matching metrics: reach and recall for awareness, CAC and conversion for acquisition. Compare against a baseline."],
-      ["Strategy","How would you launch a new snack brand in Tier-2 cities?","Cover target customer, price point, distribution through local retail, regional-language content and a small pilot before scaling."],
-      ["Concept","What is the relationship between CAC and LTV?","CAC is the cost to win a customer; LTV is what that customer brings over time. A healthy business keeps LTV well above CAC."]
-    ],
-    brief: {title:"D2C launch plan", text:"Plan the first 90 days for a new ₹499 skincare product with a ₹5 lakh budget.", items:["Target customer and positioning","Channel mix and budget split","Three KPIs and targets for day 90"], time:"12 min presentation · 20 min questions"}
-  },
-  "Leadership": {
-    intro: "For new team leads and managers: people, priorities and hard conversations.",
-    qs: [
-      ["Behavioural","Tell me about a time you handled an underperforming team member.","Use STAR. Show that you found the cause first, set clear expectations, supported them and followed up. Share the result honestly."],
-      ["Scenario","Your team has more work than capacity. How do you prioritise?","Tie work to business outcomes, agree priority with stakeholders, say no or later clearly, and protect the team from constant switching."],
-      ["People","How do you give difficult feedback?","Be specific and timely, describe the behaviour and its impact, listen to their view and agree on next steps together."]
-    ],
-    brief: {title:"Sprint recovery plan", text:"Your team has missed two sprint goals in a row and morale is low. Present a 30-day plan.", items:["Your reading of the causes","Changes to planning and team rituals","How you will communicate with stakeholders"], time:"10 min presentation · 20 min questions"}
-  }
-};
-
 const GUIDES = [
-  {i:"RD", role:"Senior Business Analyst", field:"Business Analysis", exp:"9 yrs · ERP & supply chain, UK and India", tags:["Mock panels","Career switch","Case rounds"], price:"₹999", rating:"4.8"},
+  {i:"RD", role:"Senior Business Analyst", field:"Business Analysis", exp:"9 yrs · ERP & supply chain", tags:["Mock panels","Career switch"], price:"₹999", rating:"4.8"},
   {i:"AK", role:"Engineering Lead", field:"Software Development", exp:"11 yrs · Backend and system design", tags:["System design","Senior interviews"], price:"₹1,499", rating:"4.9"},
-  {i:"MS", role:"QA Manager", field:"Quality Assurance", exp:"10 yrs · Automation and test strategy", tags:["Mock panels","QA to BA switch"], price:"₹899", rating:"4.7"},
-  {i:"NP", role:"Analytics Manager", field:"Data Analytics", exp:"8 yrs · Retail and FMCG analytics", tags:["SQL rounds","Case rounds"], price:"₹999", rating:"4.8"},
-  {i:"SJ", role:"Brand Manager", field:"Marketing", exp:"7 yrs · FMCG brands, Tier-2 launches", tags:["GTM cases","Resume review"], price:"₹899", rating:"4.6"},
-  {i:"VG", role:"Delivery Head", field:"Leadership", exp:"16 yrs · Built and led teams of 60+", tags:["Promotion prep","Leadership coaching"], price:"₹1,999", rating:"4.9"}
+  {i:"MS", role:"QA Manager", field:"Quality Assurance", exp:"10 yrs · Automation and test strategy", tags:["Mock panels","QA to BA switch"], price:"₹899", rating:"4.7"}
 ];
-
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const names = Object.keys(FIELDS);
 
-/* field explorer */
-const tabsEl = document.getElementById('tabs');
-const panelEl = document.getElementById('panel');
-function renderField(name){
-  const f = FIELDS[name];
-  [...tabsEl.children].forEach(b => b.setAttribute('aria-selected', b.dataset.name === name ? 'true' : 'false'));
-  panelEl.innerHTML = `
-    <div class="qlist">
-      <p class="intro">${esc(f.intro)}</p>
-      ${f.qs.map((q,i) => `
-        <details class="q"${i===0?' open':''}>
-          <summary><span class="tag">${esc(q[0])}</span><span>${esc(q[1])}</span><span class="plus" aria-hidden="true">+</span></summary>
-          <p class="ans"><strong>How to answer:</strong> ${esc(q[2])}</p>
-        </details>`).join('')}
-    </div>
-    <div class="brief">
-      <span class="eyebrow">Sample case brief</span>
-      <h3>${esc(f.brief.title)}</h3>
-      <p>${esc(f.brief.text)}</p>
-      <ul>${f.brief.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>
-      <span class="timer">${esc(f.brief.time)}</span>
-    </div>`;
-}
-names.forEach((n,i) => {
-  const b = document.createElement('button');
-  b.className='tab'; b.type='button'; b.setAttribute('role','tab'); b.id='tab-'+i;
-  b.dataset.name=n; b.textContent=n;
-  b.addEventListener('click', () => renderField(n));
-  tabsEl.appendChild(b);
-});
-renderField('Business Analysis');
-
-/* guide directory: live guides from the database, sample profiles until the first guides are verified */
-const gf = document.getElementById('gfilters');
+/* guides: live guides from the database, sample profiles until the first guides are verified */
 const gl = document.getElementById('glist');
-let GUIDE_ROWS = GUIDES.map(g => ({...g, live:false}));
-function renderGuides(filter){
-  [...gf.children].forEach(b => b.setAttribute('aria-selected', b.dataset.f === filter ? 'true':'false'));
-  const list = GUIDE_ROWS.filter(g => filter === 'All fields' || g.field === filter).slice(0, 6);
-  if (!list.length) { gl.innerHTML = '<p class="muted">No guides in this field yet.</p>'; return; }
-  gl.innerHTML = list.map(g => `
+function renderGuides(rows){
+  gl.innerHTML = rows.slice(0, 3).map(g => `
     <article class="guide">
       <div class="g-top">${g.live ? NR.avatar(g.full, g.photo, 44) : `<span class="av" aria-hidden="true">${esc(g.i)}</span>`}<div><div class="g-role">${esc(g.role)}</div><div class="meta">${esc(g.field)}</div></div></div>
       <p class="muted" style="font-size:.9rem">${esc(g.exp)}</p>
@@ -369,28 +278,20 @@ function renderGuides(filter){
       <div class="g-foot"><span><span class="g-price">${g.price ? 'From ' + esc(g.price) : 'Price on request'}</span>${g.rating ? ` · <span class="rating">★ ${esc(g.rating)}</span>` : ''}</span><a class="btn xs" href="${g.live ? 'guides.html?id=' + encodeURIComponent(g.id) : 'guides.html'}">${!g.live ? 'Browse' : (NR.role && NR.role !== 'learner') ? 'View profile' : 'View & book'}</a></div>
     </article>`).join('');
 }
-['All fields', ...names].forEach((n,i) => {
-  const b = document.createElement('button');
-  b.className='tab'; b.type='button'; b.setAttribute('role','tab'); b.id='gf-'+i;
-  b.dataset.f=n; b.textContent=n;
-  b.addEventListener('click', () => renderGuides(n));
-  gf.appendChild(b);
-});
-renderGuides('All fields');
+renderGuides(GUIDES.map(g => ({...g, live:false})));
 
 if (window.NR && NR.ready) {
-  NR.sb.from('guide_directory').select('*').limit(24).then(({ data, error }) => {
+  NR.sb.from('guide_directory').select('*').limit(3).then(({ data, error }) => {
     if (error || !data || !data.length) return;
-    GUIDE_ROWS = data.map(g => ({
+    document.getElementById('gflag').hidden = true;
+    renderGuides(data.map(g => ({
       live: true, id: g.guide_id, i: NR.initials(g.full_name), full: g.full_name, photo: g.avatar_url,
       role: g.full_name + (g.headline ? ' · ' + g.headline : ''), field: g.field || 'General',
       exp: [g.years_experience, g.availability].filter(Boolean).join(' · '),
       tags: [g.field, g.years_experience].filter(Boolean),
       price: g.from_price != null ? NR.inr(g.from_price) : '',
       rating: g.review_count ? `${g.rating} (${g.review_count})` : ''
-    }));
-    document.getElementById('gflag').hidden = true;
-    renderGuides('All fields');
+    })));
   });
 }
 
