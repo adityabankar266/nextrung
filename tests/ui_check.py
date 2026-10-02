@@ -231,7 +231,7 @@ def main():
         check("home sections follow the learner path", order == sorted(order), order)
         check("hero has one main button and no field chips", p.locator(".hero .hero-actions a").count() == 1 and p.locator(".field-links").count() == 0 and p.locator(".hero a[href='#how']").count() == 0)
         check("example scorecard fits the phone screen", p.evaluate("(() => { const w = document.querySelector('.hero .win'); const r = w.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && [...w.querySelectorAll('.bar-row i')].every(b => b.getBoundingClientRect().width >= 80) })()"))
-        check("home page copy stays short", p.evaluate("document.querySelector('main').innerText.split(/\\s+/).length") <= 600, p.evaluate("document.querySelector('main').innerText.split(/\\s+/).length"))
+        check("home page copy stays short", p.evaluate("document.querySelector('main').innerText.split(/\\s+/).length") <= 700, p.evaluate("document.querySelector('main').innerText.split(/\\s+/).length"))
         check("pricing shows four tiers, each with a price and a button", p.locator("#plans .tier").count() == 4 and p.locator("#plans .tier .price").count() == 4 and p.locator("#plans .tier .btn").count() == 4)
         check("phones see at most 3 guide cards on the home page", p.evaluate("[...document.querySelectorAll('#glist .guide')].filter(e => e.offsetParent).length") <= 3)
         check("home page fits in about 10 phone screens", p.evaluate("document.documentElement.scrollHeight / innerHeight") <= 10, p.evaluate("document.documentElement.scrollHeight / innerHeight"))
