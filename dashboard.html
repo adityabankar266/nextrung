@@ -720,7 +720,7 @@
           </div>
           <div class="field"><label for="g-bio">About you</label><textarea id="g-bio" maxlength="1500" placeholder="Your background, the roles you've hired for, and how you help people.">${esc(g.bio || '')}</textarea></div>
           <div class="row2">
-            <div class="field"><label for="g-li">LinkedIn profile</label><input id="g-li" type="url" value="${esc(g.linkedin_url || '')}" placeholder="https://linkedin.com/in/…"></div>
+            <div class="field"><label for="g-li">LinkedIn profile</label><input id="g-li" type="text" inputmode="url" autocapitalize="off" value="${esc(g.linkedin_url || '')}" placeholder="https://linkedin.com/in/…"></div>
             <div class="field"><label for="g-avail">Usual availability</label><select id="g-avail"><option value="">Choose…</option>${NR.options(NR.AVAILABILITY, g.availability)}</select></div>
           </div>
           <div class="field"><label for="g-phone">Phone (private, optional)</label><input id="g-phone" type="tel" value="${esc((ct.data || {}).phone || '')}" maxlength="20"></div>
@@ -853,9 +853,10 @@
     document.getElementById('guide-profile').onsubmit = async e => {
       e.preventDefault();
       const name = document.getElementById('g-name').value.trim();
-      const li = document.getElementById('g-li').value.trim();
+      const liTyped = document.getElementById('g-li').value.trim();
+      const li = NR.webUrl(liTyped);
       if (!name) return NR.toast('Add your name.', true);
-      if (li && !NR.safeUrl(li)) return NR.toast('The LinkedIn link should start with https://', true);
+      if (liTyped && !/^https:\/\/([a-z0-9-]+\.)?linkedin\.com\/.+/i.test(li)) return NR.toast('Add your full LinkedIn profile link, like https://linkedin.com/in/yourname', true);
       const ok = await run(sb.from('profiles').update({ full_name: name }).eq('id', me.id))
         && await run(sb.from('contacts').update({ phone: document.getElementById('g-phone').value.trim() || null }).eq('user_id', me.id))
         && await run(sb.from('guide_profiles').update({
@@ -976,7 +977,7 @@
 
     const guideCard = g => {
       const p = P[g.user_id] || {}, c = C[g.user_id] || {};
-      const li = NR.safeUrl(g.linkedin_url);
+      const li = NR.webUrl(g.linkedin_url);
       return `
         <div class="bk">
           <div class="bk-top">

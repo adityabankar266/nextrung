@@ -137,7 +137,7 @@
     const reviewCount = Number(g.review_count) || reviews.length;
     const avgRating = g.rating != null ? g.rating : (reviews.reduce((t, r) => t + r.rating, 0) / (reviews.length || 1)).toFixed(1);
     const slots = sl.data || [];
-    const li = NR.safeUrl(g.linkedin_url);
+    const li = NR.webUrl(g.linkedin_url);
 
     let bookHtml;
     if (!services.length) {

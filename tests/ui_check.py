@@ -159,6 +159,11 @@ def main():
         p.fill("#pw-confirm", "longpassword1"); p.click("#pw-form button[type=submit]"); p.wait_for_timeout(300)
         check("password change is sent", writes(p)[-1]["op"] == "updateUser")
         p.screenshot(path=f"{SHOTS}/guide-profile.png", full_page=True)
+        p.fill("#g-li", "aditya"); p.click("#guide-profile button[type=submit]"); p.wait_for_timeout(200)
+        check("guide profile rejects a LinkedIn link that is not a link", p.locator(".toast >> text=full LinkedIn profile link").is_visible())
+        p.fill("#g-li", "www.linkedin.com/in/rahul-d"); p.click("#guide-profile button[type=submit]"); p.wait_for_timeout(400)
+        gw = [x for x in writes(p) if x["table"] == "guide_profiles"]
+        check("guide profile saves a LinkedIn link typed without https", gw and gw[-1]["payload"]["linkedin_url"] == "https://www.linkedin.com/in/rahul-d", gw[-1:] )
 
         print("learner")
         p = page_for(b, "learner", errors)

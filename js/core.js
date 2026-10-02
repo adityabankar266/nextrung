@@ -89,6 +89,14 @@
     safeUrl(u) {
       return /^https:\/\//i.test(u || '') ? u : '';
     },
+    // A profile link as typed by a person: add https:// when it is missing, so "linkedin.com/in/name" still opens.
+    webUrl(u) {
+      u = String(u || '').trim().replace(/\s+/g, '');
+      if (!u) return '';
+      if (/^http:\/\//i.test(u)) u = 'https://' + u.slice(7);
+      else if (!/^https:\/\//i.test(u)) { if (/^[a-z][a-z0-9+.-]*:/i.test(u)) return ''; u = 'https://' + u.replace(/^\/+/, ''); }
+      try { const p = new URL(u); return p.hostname.includes('.') ? p.href : ''; } catch (e) { return ''; }
+    },
 
     // Dates and times are always shown in India time.
     istDate(ts) { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ts)); },
