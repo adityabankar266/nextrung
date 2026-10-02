@@ -345,27 +345,32 @@ footer.site-foot .f-legal{flex-basis:100%;border-top:1px solid rgba(255,255,255,
 .cmp.no li::before{content:"✗";color:var(--warn)}
 .cmp.yes li::before{content:"✓";color:var(--success)}
 
-/* pricing: tiers */
-.tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.tier{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:22px;display:flex;flex-direction:column;justify-content:space-between;gap:18px;min-width:0}
-.tier.feature{border:2px solid var(--accent)}
-.tier h3{font-size:1.05rem;font-weight:700;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.tier h3 .tag.soon{margin:0}
-.tier p{color:var(--muted);font-size:.9rem;margin-top:6px}
-.tier .price{font-weight:800;font-size:2rem;letter-spacing:-.03em;line-height:1}
-@media (max-width:900px){.tiers{grid-template-columns:1fr 1fr}}
+/* pricing: one card per tier, button pinned to the bottom */
+.tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:stretch;padding-top:14px}
+.tier{position:relative;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:28px 22px 22px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.tier.feature{border:2px solid var(--accent);box-shadow:0 24px 44px -28px rgba(37,99,235,.55)}
+.t-badge{position:absolute;top:-13px;left:22px;font-family:var(--label);font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:var(--paper);border-radius:999px;padding:5px 12px}
+.tier.feature .t-badge{background:var(--accent);color:#FFFFFF}
+.tier h3{font-size:1.1rem;font-weight:700}
+.t-who{color:var(--muted);font-size:.88rem;line-height:1.45;min-height:2.9em}
+.tier .price{font-weight:800;font-size:2.3rem;letter-spacing:-.03em;line-height:1.1;margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.tier .price small{font-size:.82rem;font-weight:500;letter-spacing:0;color:var(--muted)}
+.tier .ticks{flex:1;margin:16px 0 20px;padding-top:16px;border-top:1px solid var(--line);font-size:.9rem;gap:10px}
+.tier .ticks li::before{border-color:var(--success)}
+.tier .btn{text-align:center;border-radius:12px;padding:12px 16px}
+.home .tier .t-soon{cursor:default;color:var(--muted)!important;background:var(--paper)!important;border-style:dashed!important}
+.home .tier .t-soon:hover{border-color:var(--line)!important}
+.tiers-note{text-align:center;margin-top:22px}
+.swipe-hint{display:none}
+@media (max-width:1000px){.tiers{grid-template-columns:1fr 1fr;row-gap:26px}}
 @media (max-width:640px){
-  .tiers{grid-template-columns:1fr;gap:10px}
-  .tier{flex-direction:row;align-items:center;padding:16px 18px;border-radius:16px;gap:14px}
-  .tier .price{font-size:1.4rem;flex:none}
+  /* phones: swipe sideways through the cards, the next one peeks in */
+  .tiers{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin-inline:-20px;padding:14px 20px 8px;scrollbar-width:none}
+  .tiers::-webkit-scrollbar{display:none}
+  .tier{flex:0 0 78%;scroll-snap-align:center}
+  .t-who{min-height:0}
+  .swipe-hint{display:block;text-align:center;font-size:.8rem;color:var(--muted);margin-top:6px}
 }
-
-/* pricing: one card */
-.price-one{max-width:420px;margin-inline:auto;padding:28px;border-radius:20px;gap:16px}
-.price-one .price{font-weight:800;font-size:2.4rem;letter-spacing:-.03em}
-.price-one .price small{letter-spacing:0;font-weight:500;margin-left:6px}
-.price-one .btn{text-align:center}
-.price-one .micro{text-align:center}
 
 /* for guides */
 .guide-band{background:var(--navy);color:#FFFFFF;padding-block:72px}
