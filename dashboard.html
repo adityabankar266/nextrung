@@ -940,12 +940,13 @@
   // ADMIN
   // =====================================================================
   async function adminView() {
-    const [gps, profs, contacts, bookings, learners] = await Promise.all([
+    const [gps, profs, contacts, bookings, learners, lps] = await Promise.all([
       sb.from('guide_profiles').select('*').order('created_at', { ascending: false }),
       sb.from('profiles').select('*'),
       sb.from('contacts').select('user_id, email, phone'),
       sb.from('bookings').select('*').order('created_at', { ascending: false }).limit(100),
-      sb.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'learner')
+      sb.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'learner'),
+      sb.from('learner_profiles').select('user_id, career_stage, field')
     ]);
     const err = [gps, profs, contacts, bookings].find(r => r.error);
     if (err) throw err.error;
@@ -957,6 +958,21 @@
     const bk = bookings.data || [];
     const tab = activeTab || (pending.length ? 'pending' : 'guides');
     const count = s => bk.filter(b => b.status === s).length;
+    // learners who signed up, newest first, with the few details an admin needs
+    const LP = byId(lps.data || [], 'user_id');
+    const learnerRows = (profs.data || []).filter(p => p.role === 'learner').sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const sessionsOf = id => bk.filter(b => b.learner_id === id && ['requested', 'accepted', 'completed'].includes(b.status)).length;
+    const learnerRow = p => {
+      const c = C[p.id] || {}, l = LP[p.id] || {}, n = sessionsOf(p.id);
+      return `
+        <div class="bk learner-row">
+          <div class="who-head sm">${NR.avatar(p.full_name, p.avatar_url, 40)}<div>
+            <div class="bk-title">${esc(p.full_name || 'Unnamed')}</div>
+            <div class="bk-meta">${esc(c.email || 'No email')}</div></div></div>
+          <div class="bk-meta lr-about">${esc([l.career_stage, l.field].filter(Boolean).join(' · ') || 'Profile not filled in')}</div>
+          <div class="bk-meta lr-joined">Joined ${new Date(p.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })}${n ? ` · ${n} session${n > 1 ? 's' : ''}` : ''}</div>
+        </div>`;
+    };
 
     const guideCard = g => {
       const p = P[g.user_id] || {}, c = C[g.user_id] || {};
@@ -966,7 +982,7 @@
           <div class="bk-top">
             <div class="who-head sm">${NR.avatar(p.full_name, p.avatar_url, 44)}<div><div class="bk-title">${esc(p.full_name || 'Unnamed')}${g.headline ? ' · ' + esc(g.headline) : ''}</div>
               <div class="bk-meta">${esc([g.field, g.years_experience, g.availability].filter(Boolean).join(' · ') || 'Profile incomplete')}</div>
-              <div class="bk-meta">${esc(c.email || '')}${c.phone ? ' · ' + esc(c.phone) : ''} · joined ${NR.when(g.created_at).replace(/,.*$/, '')}</div></div></div>
+              <div class="bk-meta">${esc(c.email || '')}${c.phone ? ' · ' + esc(c.phone) : ''} · joined ${new Date(g.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })}</div></div></div>
             ${g.is_verified ? '<span class="st st-accepted">Verified</span>' : g.is_rejected ? '<span class="st st-declined">Rejected</span>' : '<span class="st st-requested">Pending review</span>'}
           </div>
           ${g.bio ? `<div class="bk-note">${esc(g.bio)}</div>` : ''}
@@ -986,11 +1002,11 @@
     root.innerHTML = `
       ${whoHead('Admin', hasGuideProfile ? '<button class="btn ghost" type="button" data-switch="guide">Open my guide dashboard</button>' : '')}
       <div class="stats" style="margin-bottom:22px">
-        <div class="stat"><div class="n">${learners.count ?? '–'}</div><div class="l">Learners</div></div>
+        <button class="stat stat-link" type="button" data-tab="learners"><div class="n">${learners.count ?? '–'}</div><div class="l">Learners ›</div></button>
         <div class="stat"><div class="n">${verified.length} <small class="muted" style="font-size:.9rem">/ ${guides.length}</small></div><div class="l">Verified guides / all guides</div></div>
         <div class="stat"><div class="n">${count('requested') + count('accepted')}</div><div class="l">Open bookings (${count('completed')} completed)</div></div>
       </div>
-      ${tabs([{ id: 'pending', label: 'To verify', badge: pending.length }, { id: 'guides', label: 'Verified guides' }, { id: 'rejected', label: 'Rejected' }, { id: 'bookings', label: 'Recent bookings' }, { id: 'profile', label: 'My profile' }], tab)}
+      ${tabs([{ id: 'pending', label: 'To verify', badge: pending.length }, { id: 'guides', label: 'Verified guides' }, { id: 'rejected', label: 'Rejected' }, { id: 'learners', label: 'Learners' }, { id: 'bookings', label: 'Recent bookings' }, { id: 'profile', label: 'My profile' }], tab)}
       <div data-panel="profile" ${tab !== 'profile' ? 'hidden' : ''}><div class="grid-2">
         <form class="card" id="admin-name" novalidate><h3>Basic details</h3>
           <div class="field"><label for="ad-name">Full name</label><input id="ad-name" value="${esc(profile.full_name)}" maxlength="120"></div>
@@ -999,6 +1015,7 @@
       <div data-panel="pending" class="stack" ${tab !== 'pending' ? 'hidden' : ''}>${pending.map(guideCard).join('') || '<div class="empty">No guides waiting for verification.</div>'}</div>
       <div data-panel="guides" class="stack" ${tab !== 'guides' ? 'hidden' : ''}>${verified.map(guideCard).join('') || '<div class="empty">No verified guides yet.</div>'}</div>
       <div data-panel="rejected" class="stack" ${tab !== 'rejected' ? 'hidden' : ''}>${rejected.map(guideCard).join('') || '<div class="empty">No rejected applications.</div>'}</div>
+      <div data-panel="learners" class="stack" ${tab !== 'learners' ? 'hidden' : ''}>${learnerRows.map(learnerRow).join('') || '<div class="empty">No learners have signed up yet.</div>'}</div>
       <div data-panel="bookings" class="stack" ${tab !== 'bookings' ? 'hidden' : ''}>${bk.map(b => `
         <div class="bk"><div class="bk-top"><div>
           <div class="bk-title">${esc((P[b.learner_id] || {}).full_name || 'Learner')} → ${esc((P[b.guide_id] || {}).full_name || 'Guide')}</div>

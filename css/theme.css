@@ -227,6 +227,14 @@ footer.site-foot .f-legal{flex-basis:100%;border-top:1px solid rgba(255,255,255,
 .legal h1{margin:6px 0 6px}
 .legal .updated{margin:0 0 14px}
 
+/* admin: learners list */
+.stat-link{font:inherit;text-align:left;cursor:pointer;color:inherit;background:var(--card)}
+.stat-link:hover{border-color:var(--accent)}
+.stat-link .l{color:var(--accent-ink);font-weight:600}
+.learner-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) auto;gap:8px 20px;align-items:center;padding:14px 18px}
+.learner-row .lr-joined{white-space:nowrap}
+@media (max-width:700px){.learner-row{grid-template-columns:1fr;gap:4px}.learner-row .lr-about,.learner-row .lr-joined{padding-left:52px}}
+
 /* ---------- shared bits used by the home page and others ---------- */
 .ico{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .btn.lg{padding:14px 26px;font-size:1rem;border-radius:12px}
