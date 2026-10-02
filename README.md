@@ -28,6 +28,7 @@ Not included yet: online payments, built-in video calls, email notifications for
 
 ```
 index.html        home page (live guide list)
+practice.html     free sample interview questions by field
 login.html        sign in, sign up, password reset
 guides.html       guide directory, guide profile and booking
 dashboard.html    learner, guide and admin dashboards
