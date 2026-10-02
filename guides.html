@@ -42,7 +42,12 @@
       </div>
     </div>
     <div id="not-ready"></div>
-    <div class="filters" role="tablist" aria-label="Filter by field" id="gfilters"></div>
+    <div class="find-bar">
+      <label class="find-search"><span class="sr-only">Search guides</span><input type="search" id="gsearch" placeholder="Search by name, role or skill" autocomplete="off"></label>
+      <label class="find-sort"><span>Sort by</span><select id="gsort"><option value="top">Top rated</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option><option value="name">Name A to Z</option></select></label>
+    </div>
+    <div class="filters scroll-row" role="tablist" aria-label="Filter by field" id="gfilters"></div>
+    <p class="find-count" id="gcount" aria-live="polite"></p>
     <div class="guides" id="glist"><p class="spinner">Loading guides…</p></div>
   </div>
 </main>
@@ -86,11 +91,25 @@
     return;
   }
 
+  const searchEl = document.getElementById('gsearch'), sortEl = document.getElementById('gsort'), countEl = document.getElementById('gcount');
+  let currentField = 'All fields';
+  const SORTS = {
+    top:  (a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0) || (b.review_count || 0) - (a.review_count || 0),
+    low:  (a, b) => (a.from_price ?? Infinity) - (b.from_price ?? Infinity),
+    high: (a, b) => (b.from_price ?? -1) - (a.from_price ?? -1),
+    name: (a, b) => String(a.full_name || '').localeCompare(String(b.full_name || ''))
+  };
   function render(filter) {
+    if (filter) currentField = filter;
+    filter = currentField;
     [...gf.children].forEach(b => b.setAttribute('aria-selected', b.dataset.f === filter ? 'true' : 'false'));
-    const list = rows.filter(g => filter === 'All fields' || g.field === filter);
+    const words = searchEl.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const hay = g => [g.full_name, g.headline, g.field, g.years_experience, g.bio].filter(Boolean).join(' ').toLowerCase();
+    const list = rows.filter(g => (filter === 'All fields' || g.field === filter) && words.every(w => hay(g).includes(w)))
+                     .sort(SORTS[sortEl.value] || SORTS.top);
+    countEl.textContent = rows.length ? `${list.length} guide${list.length === 1 ? '' : 's'}` : '';
     if (!list.length) {
-      gl.innerHTML = `<div class="empty" style="grid-column:1/-1">${rows.length ? 'No verified guides in this field yet. Try another field.' : 'No verified guides yet. Check back soon.'}</div>`;
+      gl.innerHTML = `<div class="empty" style="grid-column:1/-1">${!rows.length ? 'No verified guides yet. Check back soon.' : words.length ? 'No guides match your search. Try a different word or field.' : 'No verified guides in this field yet. Try another field.'}</div>`;
       return;
     }
     gl.innerHTML = list.map(g => `
@@ -113,6 +132,9 @@
     b.addEventListener('click', () => render(n));
     gf.appendChild(b);
   });
+
+  searchEl.addEventListener('input', () => render());
+  sortEl.addEventListener('change', () => render());
 
   gl.addEventListener('click', e => {
     const b = e.target.closest('[data-open]');

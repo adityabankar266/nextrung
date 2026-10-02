@@ -483,7 +483,7 @@
   function dismissUpdates() { updates = []; const u = document.getElementById('updates'); if (u) u.remove(); }
   async function copyText(text, okMsg) {
     try { await navigator.clipboard.writeText(text); NR.toast(okMsg); }
-    catch (e) { NR.toast('Copy failed. The UPI ID is ' + text + '.', true); }
+    catch (e) { NR.toast('Copy failed. Please copy it by hand: ' + text, true); }
   }
 
   function confirmBox(title, text, action, onYes) {
@@ -1007,7 +1007,7 @@
         <div class="stat"><div class="n">${verified.length} <small class="muted" style="font-size:.9rem">/ ${guides.length}</small></div><div class="l">Verified guides / all guides</div></div>
         <div class="stat"><div class="n">${count('requested') + count('accepted')}</div><div class="l">Open bookings (${count('completed')} completed)</div></div>
       </div>
-      ${tabs([{ id: 'pending', label: 'To verify', badge: pending.length }, { id: 'guides', label: 'Verified guides' }, { id: 'rejected', label: 'Rejected' }, { id: 'learners', label: 'Learners' }, { id: 'bookings', label: 'Recent bookings' }, { id: 'profile', label: 'My profile' }], tab)}
+      ${tabs([{ id: 'pending', label: 'To verify', badge: pending.length }, { id: 'guides', label: 'Verified guides' }, { id: 'rejected', label: 'Rejected' }, { id: 'learners', label: 'Learners' }, { id: 'bookings', label: 'Recent bookings' }, ...(hasGuideProfile ? [{ id: 'my-availability', label: 'My availability' }] : []), { id: 'profile', label: 'My profile' }], tab)}
       <div data-panel="profile" ${tab !== 'profile' ? 'hidden' : ''}><div class="grid-2">
         <form class="card" id="admin-name" novalidate><h3>Basic details</h3>
           <div class="field"><label for="ad-name">Full name</label><input id="ad-name" value="${esc(profile.full_name)}" maxlength="120"></div>
@@ -1017,18 +1017,53 @@
       <div data-panel="guides" class="stack" ${tab !== 'guides' ? 'hidden' : ''}>${verified.map(guideCard).join('') || '<div class="empty">No verified guides yet.</div>'}</div>
       <div data-panel="rejected" class="stack" ${tab !== 'rejected' ? 'hidden' : ''}>${rejected.map(guideCard).join('') || '<div class="empty">No rejected applications.</div>'}</div>
       <div data-panel="learners" class="stack" ${tab !== 'learners' ? 'hidden' : ''}>${learnerRows.map(learnerRow).join('') || '<div class="empty">No learners have signed up yet.</div>'}</div>
-      <div data-panel="bookings" class="stack" ${tab !== 'bookings' ? 'hidden' : ''}>${bk.map(b => `
-        <div class="bk"><div class="bk-top"><div>
+      <div data-panel="bookings" class="stack" ${tab !== 'bookings' ? 'hidden' : ''}>
+        ${bk.length ? `<div class="bk-filters">
+          <input type="search" id="bf-q" placeholder="Search learner, guide or service" autocomplete="off" aria-label="Search bookings">
+          <select id="bf-status" aria-label="Status"><option value="">All statuses</option><option value="requested">New request</option><option value="accepted">Accepted</option><option value="completed">Completed</option><option value="declined">Rejected</option><option value="cancelled">Cancelled</option></select>
+          <select id="bf-when" aria-label="When"><option value="">Any date</option><option value="upcoming">Upcoming</option><option value="week">Next 7 days</option><option value="past">Past</option></select>
+          <span class="bk-meta" id="bf-count" aria-live="polite"></span>
+        </div>` : ''}
+        ${bk.map(b => `
+        <div class="bk" data-bk data-status="${b.status}" data-at="${new Date(b.scheduled_at).getTime()}" data-text="${esc([(P[b.learner_id] || {}).full_name, (P[b.guide_id] || {}).full_name, b.service_title].filter(Boolean).join(' ').toLowerCase())}"><div class="bk-top"><div>
           <div class="bk-title">${esc((P[b.learner_id] || {}).full_name || 'Learner')} → ${esc((P[b.guide_id] || {}).full_name || 'Guide')}</div>
           <div class="bk-meta">${esc(b.service_title)} · ${NR.when(b.scheduled_at)} · ${NR.inr(b.price_inr)}</div></div>${status(b.status)}</div>
           ${rescheduleNote(b, 'admin')}
+          ${b.status === 'accepted' && NR.safeUrl(b.meeting_link) ? `<div class="bk-link">Meeting link: <a class="meet" href="${esc(NR.safeUrl(b.meeting_link))}" target="_blank" rel="noopener">${esc(b.meeting_link)}</a></div>` : ''}
           ${['requested', 'accepted'].includes(b.status) ? `<div class="bk-actions">
+            ${b.status === 'accepted' && NR.safeUrl(b.meeting_link) ? `<a class="btn xs" href="${esc(NR.safeUrl(b.meeting_link))}" target="_blank" rel="noopener">Join session</a>
+              <button class="btn ghost xs" type="button" data-act="copy-link" data-link="${esc(NR.safeUrl(b.meeting_link))}">Copy link</button>` : ''}
             ${b.status === 'requested' ? `<button class="btn xs" type="button" data-act="bk-accept" data-id="${b.id}">Accept</button>
               <button class="btn ghost xs" type="button" data-act="bk-reject" data-id="${b.id}">Reject</button>` : ''}
             ${b.status === 'accepted' ? `<button class="btn ghost xs" type="button" data-act="bk-cancel" data-id="${b.id}">Cancel</button>` : ''}
             ${canMove(b) ? `<button class="btn ghost xs" type="button" data-act="bk-resched" data-id="${b.id}">Reschedule</button>` : ''}
           </div>` : ''}</div>`).join('')
-        || '<div class="empty">No bookings yet.</div>'}</div>`;
+        || '<div class="empty">No bookings yet.</div>'}
+        <div class="empty" id="bf-none" hidden>No bookings match these filters.</div></div>`;
+
+    // booking filters: search text, status and date range, applied to the cards already on the page
+    const bfQ = document.getElementById('bf-q');
+    if (bfQ) {
+      const bfS = document.getElementById('bf-status'), bfW = document.getElementById('bf-when');
+      const saved = adminView.filters || {};
+      bfQ.value = saved.q || ''; bfS.value = saved.status || ''; bfW.value = saved.when || '';
+      const applyFilters = () => {
+        adminView.filters = { q: bfQ.value, status: bfS.value, when: bfW.value };
+        const words = bfQ.value.trim().toLowerCase().split(/\s+/).filter(Boolean), now = Date.now(), week = now + 7 * 864e5;
+        let shown = 0;
+        root.querySelectorAll('[data-bk]').forEach(el => {
+          const at = Number(el.dataset.at);
+          const ok = (!bfS.value || el.dataset.status === bfS.value)
+            && words.every(w => el.dataset.text.includes(w))
+            && (!bfW.value || (bfW.value === 'upcoming' && at >= now) || (bfW.value === 'week' && at >= now && at <= week) || (bfW.value === 'past' && at < now));
+          el.hidden = !ok; if (ok) shown++;
+        });
+        document.getElementById('bf-count').textContent = `${shown} of ${bk.length}`;
+        document.getElementById('bf-none').hidden = shown > 0;
+      };
+      bfQ.oninput = applyFilters; bfS.onchange = applyFilters; bfW.onchange = applyFilters;
+      applyFilters();
+    }
 
     wireAccount(() => { activeTab = 'profile'; adminView(); });
     document.getElementById('admin-name').onsubmit = async e => {
@@ -1039,9 +1074,17 @@
     };
     root.onclick = async e => {
       const t = e.target.closest('[data-tab]');
+      if (t && t.dataset.tab === 'my-availability') {
+        // shortcut: open the admin's own guide dashboard straight on the Availability tab
+        try { sessionStorage.setItem('nr-view', 'guide'); } catch (err) {}
+        activeTab = 'availability';
+        root.innerHTML = '<p class="spinner">Loading…</p>';
+        return guideView();
+      }
       if (t) { activeTab = t.dataset.tab; return adminView(); }
       const a = e.target.closest('[data-act]');
       if (!a) return;
+      if (a.dataset.act === 'copy-link') return copyText(a.dataset.link, 'Meeting link copied.');
       const id = a.dataset.id;
       const bkRow = bk.find(x => x.id === id);
       if (bkRow) {

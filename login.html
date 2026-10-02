@@ -98,7 +98,8 @@
         <p class="demo-note">You can change services and prices later. Your profile goes live once our team has verified it, usually within two working days.</p>
       </div>
 
-      <label class="consent"><input type="checkbox" id="su-consent"><span>I agree to the <a href="terms.html" target="_blank" rel="noopener">terms of use</a> and the <a href="privacy.html" target="_blank" rel="noopener">privacy notice</a>, and I am 18 or over.</span></label>
+      <label class="consent"><input type="checkbox" id="su-consent"><span>I agree to the <a href="terms.html" target="_blank" rel="noopener">terms of use</a> and the <a href="privacy.html" target="_blank" rel="noopener">privacy notice</a>.</span></label>
+      <label class="consent"><input type="checkbox" id="su-age"><span>I confirm that I am 18 years of age or older.</span></label>
       <button class="btn" type="submit">Create account</button>
       <div class="ok" id="msg-signup" hidden></div>
     </form>
@@ -249,6 +250,8 @@
     }
 
     if (!$('su-consent').checked) return say('msg-signup', 'Please agree to the terms and privacy notice to continue.', true);
+    if (!$('su-age').checked) return say('msg-signup', 'Please confirm that you are 18 or over. NextRung is for adults only.', true);
+    meta.age_confirmed_at = new Date().toISOString();
     busy(forms.signup, true);
     // after confirming their email, people land back where they started (for example, the guide they wanted to book)
     const { data, error } = await NR.sb.auth.signUp({

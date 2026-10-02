@@ -234,6 +234,21 @@ footer.site-foot .f-legal{flex-basis:100%;border-top:1px solid rgba(255,255,255,
 .stars-hint{font-size:.88rem;color:var(--muted);margin-top:-6px}
 .g-rating{font-size:.88rem;color:var(--muted);margin-top:4px}
 
+/* find a guide: search and sort */
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.find-bar{display:flex;gap:12px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.find-search{flex:1 1 260px}
+.find-search input,.find-sort select,.bk-filters input,.bk-filters select{width:100%;font:inherit;font-size:.95rem;padding:11px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+.find-search input:focus,.find-sort select:focus,.bk-filters input:focus,.bk-filters select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.find-sort{display:flex;align-items:center;gap:8px;font-size:.88rem;color:var(--muted);flex:0 0 auto}
+.find-sort select{width:auto}
+.find-count{font-size:.88rem;color:var(--muted);margin:-6px 0 14px}
+
+/* admin: booking filters and meeting link */
+.bk-filters{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:center}
+.bk-link{font-size:.9rem;word-break:break-all}
+@media (max-width:700px){.bk-filters{grid-template-columns:1fr 1fr}.bk-filters input{grid-column:1/-1}.find-sort{flex:1 1 100%}.find-sort select{flex:1}}
+
 /* admin: learners list */
 .stat-link{font:inherit;text-align:left;cursor:pointer;color:inherit;background:var(--card)}
 .stat-link:hover{border-color:var(--accent)}
